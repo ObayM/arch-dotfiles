@@ -66,6 +66,13 @@ Variants {
                 Layout.fillWidth: true
             }
 
+            // Text {
+            //     text: 'Sofa'
+            //     color: Appearance.fg
+            //     font.pixelSize: 13
+            //     font.family: Appearance.fontFamily
+            // }
+
             Text {
                 text: Qt.formatDateTime(clock.date, "ddd d MMM   hh:mm")
                 color: Appearance.fg
