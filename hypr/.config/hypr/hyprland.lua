@@ -1,10 +1,12 @@
 local mod = "SUPER"
-local terminal = "kitty"
+local terminal = "konsole"
 local file_manager = "dolphin"
+local menu = "hyprlauncher"
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("QT_QPA_PLATFORM", "wayland")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
+
 
 hl.config({
     general = {
@@ -44,8 +46,10 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
 end)
 
-hl.bind(mod .. " + Q", hl.dsp.exec_cmd(terminal))
+hl.bind(mod .. " + T", hl.dsp.exec_cmd(terminal))
 hl.bind(mod .. " + E", hl.dsp.exec_cmd(file_manager))
+hl.bind(mod .. " + S", hl.dsp.exec_cmd(menu))
+hl.bind(mod .. " + X", hl.dsp.exec_cmd("code"))
 hl.bind(mod .. " + C", hl.dsp.window.close())
 hl.bind(mod .. " + V", hl.dsp.window.float())
 hl.bind(mod .. " + F", hl.dsp.window.fullscreen())
