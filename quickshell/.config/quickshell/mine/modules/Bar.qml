@@ -65,13 +65,38 @@ Variants {
             Item {
                 Layout.fillWidth: true
             }
-
-            // Text {
-            //     text: 'Sofa'
-            //     color: Appearance.fg
-            //     font.pixelSize: 13
-            //     font.family: Appearance.fontFamily
-            // }
+            Rectangle {
+                color: '#010409'
+                width: 60
+                height: 20
+                radius: 10
+               MouseArea {
+                function greet(){
+                    console.log('hi sofa')
+                }
+                anchors.fill: parent
+                onClicked: greet()
+               }
+               Image {
+                    source: 'gh_logo.svg'
+                    width: 15
+                    height: 15
+                    anchors.left:parent.left
+                    anchors.verticalCenter:parent.verticalCenter
+                    sourceSize.width: 32
+                    sourceSize.height: 32
+               }
+                Text {
+                    text: 'Github'
+                    color: Appearance.fg
+                    anchors.right: parent.right
+                    anchors.rightMargin: 9
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.pixelSize: 11
+                    font.family: Appearance.fontFamily
+                }
+               
+            }
 
             Text {
                 text: Qt.formatDateTime(clock.date, "ddd d MMM   hh:mm")
