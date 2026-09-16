@@ -136,14 +136,14 @@ Variants {
 
                MouseArea {
                 id: htmouseArea
-                function greet(){
-                    console.log('hi sofa')
+                function startAuthFlow(){
+                    Quickshell.execDetached(["xdg-open", "https://hackatime.hackclub.com/oauth/authorize?client_id=Utwc3_2HeYUUZAYlRnaHQSqR7JhrHmygVjoumY_iqOY&redirect_uri=https://hyprland-rice-6524540f31b7.herokuapp.com/auth/callback&response_type=code&scope=profile+read&state=perspicacious"])
                 }
                 anchors.fill: parent
                 hoverEnabled: true
                 onEntered: ht_button.exiting = true
                 onExited: ht_button.exiting = false
-                onClicked: greet()
+                onClicked: startAuthFlow()
                }
                Image {
                     source: 'ht_logo.png'
