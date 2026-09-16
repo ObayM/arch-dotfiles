@@ -3,6 +3,8 @@ const express = require('express');
 const app = express()
 const port =  process.env.PORT || 3000
 const crypto = require('crypto')
+require('dotenv').config()
+
 let HOST_URL = process.env.URL 
 const pendingAuth = new Map();
 
