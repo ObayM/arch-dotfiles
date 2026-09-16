@@ -66,67 +66,6 @@ Variants {
                 Layout.fillWidth: true
             }
             Rectangle {
-                id: gh_button
-                color: '#010409'
-                width: 80
-                height: 25
-                radius: 10
-                property bool exiting: false
-
-                MouseArea {
-                    id: ghmouseArea
-                    function greet(){
-                        console.log('hi sofa')
-                    }
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onEntered: gh_button.exiting = true
-                    onExited: gh_button.exiting = false
-                    onClicked: greet()
-                }
-                Image {
-                    source: 'gh_logo.svg'
-                    width: 20
-                    height: 20
-                    x: ghmouseArea.containsMouse ? 0 : (parent.width - width) / 2 
-                    y: (parent.height - height -2) / 2 
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: gh_button.exiting ? 400 : 200 
-                            easing.type: gh_button.exiting ? Easing.InCubic : Easing.OutCubic 
-                        }
-                    }
-                    fillMode:Image.PreserveAspectFit
-                    sourceSize.width: 32
-                    sourceSize.height: 32
-                }
-                Text {
-                    text: 'Github'
-                    color: Appearance.fg
-                    opacity: ghmouseArea.containsMouse ? 1 : 0 
-                    scale: ghmouseArea.containsMouse ? 1 : 0 
-
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    anchors.rightMargin: 6
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: gh_button.exiting ? 200 : 400 
-                            easing.type :gh_button.exiting ? Easing.OutCubic : Easing.InCubic
-                        }
-                    }
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: gh_button.exiting ? 200 : 400 
-                            easing.type :gh_button.exiting ? Easing.OutCubic : Easing.InCubic
-                        }
-                    }
-                    font.pixelSize: 15
-                    font.family: Appearance.fontFamily
-                }
-               
-            }
-            Rectangle {
                 id: ht_button
                 color: '#010409'
                 width: 100
