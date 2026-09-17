@@ -79,7 +79,19 @@ ShellRoot {
         target: "hackatime"
         function authenticate(code: string) {
             console.log("Received Hackatime code:", code)
-            
+            var xhr = new XMLHttpRequest()
+
+            xhr.open('POST','https://hyprland-rice-6524540f31b7.herokuapp.com/auth/exchange')
+            xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded")
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== XMLHttpRequest.DONE)return
+                console.log(xhr.status)
+                console.log(xhr.responseText)
+                console.log((JSON.parse(xhr.responseText)).access_token)
+
+                root.saveToken((JSON.parse(xhr.responseText)).access_token)
+            }
+            xhr.send("code=" + encodeURIComponent(code))
         }
     }
     Bar {}
