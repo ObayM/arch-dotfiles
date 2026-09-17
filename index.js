@@ -7,7 +7,7 @@ require('dotenv').config()
 
 let HOST_URL = process.env.URL 
 const pendingAuth = new Map();
-
+app.use(express.urlencoded({extended:false}))
 app.get('/auth/callback',async (req, res) => {
     let code = req.query.code
     let state = req.query.state
@@ -26,7 +26,7 @@ app.get('/auth/callback',async (req, res) => {
     res.redirect(`hackatime://auth/callback?code=${qscode}`)
 })
 app.post('/auth/exchange',async (req, res) => {
-    let code = req.query.code
+    let code = req.body.code
     const auth = pendingAuth.get(code);
     if (!auth || auth.expires < Date.now()) {
         return res.status(401).json({
