@@ -18,29 +18,20 @@ Variants {
         screen: modelData
 
         function startTodayTimeFetch(){
-            console.log('yes')
-            todayTimeProcess.running = true
-        }
-        Process {
-            id: todayTimeProcess
+            var xhr = new XMLHttpRequest()
+            var today = new Date().toISOString().split('T')[0]
 
-            command: [
-                "curl",
-                "-s",
-                "-H", "Authorization: Bearer " + panel.token,
-                "https://hackatime.hackclub.com/api/v1/authenticated/hours?start_date=" +
-                Qt.formatDate(new Date(), "yyyy-MM-dd") +
-                "&end_date=" +
-                Qt.formatDate(new Date(), "yyyy-MM-dd")
-            ]
+            xhr.open('GET','https://hackatime.hackclub.com/api/v1/authenticated/hours?start_date=' + today + "&end_date=" + today)
+            xhr.setRequestHeader("Content-Type","Bearer"+ panel.ptoken)
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== XMLHttpRequest.DONE)return
+                console.log('response:', xhr.responseText)
+                console.log('response:', today)
 
-            stdout: StdioCollector {
-                onStreamFinished: {
-                    var data = JSON.parse(text)
-                    panel.displayed_info = data.total_seconds
-                    console.log("Today's seconds:", data.total_seconds)
-                }
+                console.log('response:', panel.ptoken)
+
             }
+            xhr.send()
         }
         anchors {
             top: true
@@ -173,10 +164,7 @@ Variants {
             }
         }
         Component.onCompleted: {
-            console.log(ptoken)
-            if (token !== '') {
-                startTodayTimeFetch()
-            }
+            startTodayTimeFetch()
         }
     }
 }
