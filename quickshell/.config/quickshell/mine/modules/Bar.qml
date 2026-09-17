@@ -15,21 +15,32 @@ Variants {
         property string ptoken: bar.token;
         property string displayed_info: 'Hackatime'
         required property var modelData
-        screen: modelData
+        property bool showTracked;
+        property bool exiting: false
 
+        screen: modelData
+        Timer {
+            id:displayTimer
+            interval: 5000
+            running:false
+            repeat:true
+            onTriggered:{
+                exiting = showTracked
+                showTracked = !showTracked
+            }
+        }
         function startTodayTimeFetch(){
             var xhr = new XMLHttpRequest()
             var today = new Date().toISOString().split('T')[0]
+            xhr.open("GET","https://hackatime.hackclub.com/api/v1/authenticated/hours?start_date=" + today + "&end_date=" + today)
+            xhr.setRequestHeader("Authorization","Bearer "+ panel.ptoken)
+            xhr.setRequestHeader("Accept","application/json")
 
-            xhr.open('GET','https://hackatime.hackclub.com/api/v1/authenticated/hours?start_date=' + today + "&end_date=" + today)
-            xhr.setRequestHeader("Content-Type","Bearer"+ panel.ptoken)
             xhr.onreadystatechange = function () {
                 if (xhr.readyState !== XMLHttpRequest.DONE)return
-                console.log('response:', xhr.responseText)
-                console.log('response:', today)
-
-                console.log('response:', panel.ptoken)
-
+                var trackedTime = (+JSON.parse(xhr.responseText).total_seconds / 3600).toFixed(2)
+                displayed_info = trackedTime +  'h'
+                displayTimer.running = true
             }
             xhr.send()
         }
@@ -91,7 +102,6 @@ Variants {
                 width: 100
                 height: 25
                 radius: 10
-                property bool exiting: false
 
                MouseArea {
                 id: htmouseArea
@@ -103,10 +113,9 @@ Variants {
                 }
                 anchors.fill: parent
                 hoverEnabled: true
-                onEntered: ht_button.exiting = true
-                onExited: ht_button.exiting = false
+                onEntered: panel.exiting = true
+                onExited: panel.exiting = false
                 onClicked: { 
-                    console.log(ptoken)
                     if(panel.ptoken !== ''){
                         openHackatimeDashboard()
                     }else{
@@ -120,11 +129,11 @@ Variants {
                     width: 25
                     height: 25
                     anchors.verticalCenter:parent.verticalCenter
-                    x: htmouseArea.containsMouse ? 0 : (parent.width - width) / 2 
+                    x: panel.showTracked ? 0 : htmouseArea.containsMouse ? 0 : (parent.width - width) / 2 
                     Behavior on x {
                         NumberAnimation {
-                            duration: ht_button.exiting ? 400 : 200 
-                            easing.type: ht_button.exiting ? Easing.InCubic : Easing.OutCubic 
+                            duration: panel.exiting ? 400 : 200 
+                            easing.type: panel.exiting ? Easing.InCubic : Easing.OutCubic 
                         }
                     }
                     sourceSize.width: 126
@@ -133,22 +142,22 @@ Variants {
                 Text {
                     text: panel.displayed_info
                     color: Appearance.fg
-                    opacity: htmouseArea.containsMouse ? 1 : 0 
-                    scale: htmouseArea.containsMouse ? 1 : 0 
+                    opacity: panel.showTracked ?1 : htmouseArea.containsMouse ? 1 : 0 
+                    scale: panel.showTracked ? 1: htmouseArea.containsMouse ? 1 : 0 
 
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: 6
                     Behavior on opacity {
                         NumberAnimation {
-                            duration: ht_button.exiting ? 200 : 400 
-                            easing.type :ht_button.exiting ? Easing.OutCubic : Easing.InCubic
+                            duration: panel.exiting ? 200 : 400 
+                            easing.type :panel.exiting ? Easing.OutCubic : Easing.InCubic
                         }
                     }
                     Behavior on scale {
                         NumberAnimation {
-                            duration: ht_button.exiting ? 200 : 400 
-                            easing.type :ht_button.exiting ? Easing.OutCubic : Easing.InCubic
+                            duration: panel.exiting ? 200 : 400 
+                            easing.type :panel.exiting ? Easing.OutCubic : Easing.InCubic
                         }
                     }
                     font.pixelSize: 14
@@ -163,8 +172,11 @@ Variants {
                 font.pixelSize: 13
             }
         }
-        Component.onCompleted: {
-            startTodayTimeFetch()
+        onPtokenChanged: {
+            if(ptoken !== ''){
+                startTodayTimeFetch()
+
+            }
         }
     }
 }
