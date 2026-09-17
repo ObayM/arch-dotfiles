@@ -85,14 +85,12 @@ ShellRoot {
             xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded")
             xhr.onreadystatechange = function () {
                 if (xhr.readyState !== XMLHttpRequest.DONE)return
-                console.log(xhr.status)
-                console.log(xhr.responseText)
-                console.log((JSON.parse(xhr.responseText)).access_token)
-
                 root.saveToken((JSON.parse(xhr.responseText)).access_token)
             }
             xhr.send("code=" + encodeURIComponent(code))
         }
     }
-    Bar {}
+    Bar {
+        token:root.token
+    }
 }

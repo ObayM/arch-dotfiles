@@ -5,14 +5,43 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
 import qs.config
-
+import Quickshell.Io
 Variants {
+    id: bar
+    required property string token;
     model: Quickshell.screens
-
     PanelWindow {
+        id:panel
+        property string ptoken: bar.token;
+        property string displayed_info: 'Hackatime'
         required property var modelData
         screen: modelData
 
+        function startTodayTimeFetch(){
+            console.log('yes')
+            todayTimeProcess.running = true
+        }
+        Process {
+            id: todayTimeProcess
+
+            command: [
+                "curl",
+                "-s",
+                "-H", "Authorization: Bearer " + panel.token,
+                "https://hackatime.hackclub.com/api/v1/authenticated/hours?start_date=" +
+                Qt.formatDate(new Date(), "yyyy-MM-dd") +
+                "&end_date=" +
+                Qt.formatDate(new Date(), "yyyy-MM-dd")
+            ]
+
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    var data = JSON.parse(text)
+                    panel.displayed_info = data.total_seconds
+                    console.log("Today's seconds:", data.total_seconds)
+                }
+            }
+        }
         anchors {
             top: true
             left: true
@@ -78,11 +107,22 @@ Variants {
                 function startAuthFlow(){
                     Quickshell.execDetached(["xdg-open", "https://hackatime.hackclub.com/oauth/authorize?client_id=Utwc3_2HeYUUZAYlRnaHQSqR7JhrHmygVjoumY_iqOY&redirect_uri=https://hyprland-rice-6524540f31b7.herokuapp.com/auth/callback&response_type=code&scope=profile+read&state=perspicacious"])
                 }
+                function openHackatimeDashboard(){
+                    // Hackatime Dashboard for later
+                }
                 anchors.fill: parent
                 hoverEnabled: true
                 onEntered: ht_button.exiting = true
                 onExited: ht_button.exiting = false
-                onClicked: startAuthFlow()
+                onClicked: { 
+                    console.log(ptoken)
+                    if(panel.ptoken !== ''){
+                        openHackatimeDashboard()
+                    }else{
+                        startAuthFlow()
+
+                    }
+                }
                }
                Image {
                     source: 'ht_logo.png'
@@ -100,7 +140,7 @@ Variants {
                     sourceSize.height: 126
                }
                 Text {
-                    text: 'Hackatime'
+                    text: panel.displayed_info
                     color: Appearance.fg
                     opacity: htmouseArea.containsMouse ? 1 : 0 
                     scale: htmouseArea.containsMouse ? 1 : 0 
@@ -130,6 +170,12 @@ Variants {
                 color: Appearance.fg
                 font.family: Appearance.fontFamily
                 font.pixelSize: 13
+            }
+        }
+        Component.onCompleted: {
+            console.log(ptoken)
+            if (token !== '') {
+                startTodayTimeFetch()
             }
         }
     }
