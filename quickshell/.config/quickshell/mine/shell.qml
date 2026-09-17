@@ -4,16 +4,16 @@
 import Quickshell
 import qs.modules
 import Quickshell.Io
-
+import QtQuick
 
 ShellRoot {
     id:root
 
     property string token: ""
+    property string tokenToSave: ""
+
     function saveToken(value){
-        saveProcess.enviroment = ({
-            TOKEN:value
-        })
+        tokenToSave = value
         saveProcess.running = true
     }
     function loadToken() {
@@ -23,11 +23,24 @@ ShellRoot {
     Process {
         id: saveProcess
 
+        environment: ({
+            TOKEN: root.tokenToSave
+        })
+
         command: [
             "sh",
             "-c",
             "printf '%s' \"$TOKEN\" | secret-tool store --label='Quickshell Authentication Token' service quickshell-auth"
         ]
+
+        onExited: function(exitCode){
+            if(exitCode === 0){
+                root.token = root.tokenToSave
+            }else{
+                console.log('Failed to save auth token')
+            }
+            root.tokenToSave = ""
+        }
     }
     Process {
         id: loadProcess
@@ -44,9 +57,21 @@ ShellRoot {
                 root.token = this.text.trim()
             }
         }
+        onExited: function(exitCode){
+            if(exitCode !== 0){
+                root.token = ''
+                console.log('no auth token available')
+            }
+        }
     }
-    Component.onCompleted: {
-        loadToken()
+    
+    Timer {
+        interval:0
+        running:true
+        repeat:false 
+        onTriggered: {
+            root.loadToken() 
+        }
     }
 
     IpcHandler {
@@ -54,6 +79,7 @@ ShellRoot {
         target: "hackatime"
         function authenticate(code: string) {
             console.log("Received Hackatime code:", code)
+            
         }
     }
     Bar {}
