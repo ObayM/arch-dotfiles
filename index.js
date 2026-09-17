@@ -28,9 +28,7 @@ app.get('/auth/callback',async (req, res) => {
 app.post('/auth/exchange',async (req, res) => {
     let code = req.body.code
     const auth = pendingAuth.get(code);
-    console.log(code)
-    console.log(pendingAuth)
-    console.log(auth)
+
     if (!auth || auth.expires < Date.now()) {
         return res.status(401).json({
             error: 'Invalid or expired code'
