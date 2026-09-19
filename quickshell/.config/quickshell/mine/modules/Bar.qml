@@ -78,17 +78,27 @@ Variants {
             }
         }
 
-        function startTodayTimeFetch() {
+        Timer {
+            id: refreshTimer
+            interval: 5 * 60 * 1000
+            running: bar.ptoken !== ''
+            repeat: true
+            onTriggered: bar.fetchTodayTime()
+        }
+
+        function fetchTodayTime() {
             var xhr = new XMLHttpRequest()
-            var today = new Date().toISOString().split('T')[0]
-            xhr.open("GET", "https://hackatime.hackclub.com/api/v1/authenticated/hours?start_date=" + today + "&end_date=" + today)
+            xhr.open("GET", "https://hackatime.hackclub.com/api/hackatime/v1/users/current/statusbar/today")
             xhr.setRequestHeader("Authorization", "Bearer " + bar.ptoken)
             xhr.setRequestHeader("Accept", "application/json")
 
             xhr.onreadystatechange = function () {
                 if (xhr.readyState !== XMLHttpRequest.DONE) return
-                var trackedTime = (+JSON.parse(xhr.responseText).total_seconds / 3600).toFixed(2)
-                displayed_info = trackedTime + 'h'
+                if (xhr.status !== 200) {
+                    console.log("Hackatime fetch failed:", xhr.status)
+                    return
+                }
+                displayed_info = JSON.parse(xhr.responseText).data.grand_total.text
                 displayTimer.running = true
             }
             xhr.send()
@@ -356,22 +366,11 @@ Variants {
 
                     MouseArea {
                         id: htmouseArea
-                        function startAuthFlow() {
-                            Quickshell.execDetached(["xdg-open", "https://hackatime.hackclub.com/oauth/authorize?client_id=Utwc3_2HeYUUZAYlRnaHQSqR7JhrHmygVjoumY_iqOY&redirect_uri=https://hyprland-rice-6524540f31b7.herokuapp.com/auth/callback&response_type=code&scope=profile+read&state=perspicacious"])
-                        }
-                        function openHackatimeDashboard() {
-                        }
                         anchors.fill: parent
                         hoverEnabled: true
                         onEntered: bar.exiting = true
                         onExited: bar.exiting = false
-                        onClicked: {
-                            if (bar.ptoken !== '') {
-                                openHackatimeDashboard()
-                            } else {
-                                startAuthFlow()
-                            }
-                        }
+                        onClicked: Quickshell.execDetached(["xdg-open", "https://hackatime.hackclub.com"])
                     }
                     Image {
                         source: 'ht_logo.png'
@@ -464,7 +463,9 @@ Variants {
 
         onPtokenChanged: {
             if (ptoken !== '') {
-                startTodayTimeFetch()
+                fetchTodayTime()
+            } else {
+                displayed_info = 'Hackatime'
             }
         }
     }

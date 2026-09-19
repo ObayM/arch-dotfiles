@@ -53,65 +53,9 @@ TEMPLATE
     fi
 fi
 
-HACKATIME_BIN="$HOME/.local/bin/hackatime-auth"
-HACKATIME_DESKTOP="$HOME/.local/share/applications/hackatime-auth.desktop"
-
-info "installing Hackatime OAuth handler"
-
-mkdir -p "$(dirname "$HACKATIME_BIN")"
-mkdir -p "$(dirname "$HACKATIME_DESKTOP")"
-
-cat > "$HACKATIME_BIN" <<'EOF'
-#!/usr/bin/env bash
-
-set -euo pipefail
-
-URL="${1:-}"
-
-if [[ -z "$URL" ]]; then
-    exit 1
+if [[ ! -f "$HOME/.wakatime.cfg" ]] || ! grep -q '^api_key' "$HOME/.wakatime.cfg" 2>/dev/null; then
+    info "no Hackatime API key found in ~/.wakatime.cfg; the bar's Hackatime widget needs one to show your stats"
+    info "set up Hackatime for your editor at https://hackatime.hackclub.com to get one"
 fi
-
-CODE="$(
-    python -c '
-import sys
-from urllib.parse import urlparse, parse_qs
-
-url = sys.argv[1]
-query = parse_qs(urlparse(url).query)
-
-print(query.get("code", [""])[0])
-' "$URL"
-)"
-
-if [[ -z "$CODE" ]]; then
-    exit 1
-fi
-
-qs -c mine ipc call hackatime authenticate "$CODE"
-EOF
-
-chmod +x "$HACKATIME_BIN"
-
-rm -f "$HACKATIME_DESKTOP"
-
-cat > "$HACKATIME_DESKTOP" <<EOF
-[Desktop Entry]
-Name=My Hyprland Auth
-Comment=Handles My Hyprland OAuth callbacks
-Exec=$HACKATIME_BIN %u
-Type=Application
-Terminal=false
-NoDisplay=true
-MimeType=x-scheme-handler/hackatime;
-EOF
-
-xdg-mime default hackatime-auth.desktop x-scheme-handler/hackatime
-
-if command -v update-desktop-database >/dev/null 2>&1; then
-    update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
-fi
-
-info "Hackatime OAuth handler installed."
 
 info "Everything is done :)"
