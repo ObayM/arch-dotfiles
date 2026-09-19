@@ -54,6 +54,8 @@ hl.bind(mod .. " + T", hl.dsp.exec_cmd(terminal))
 hl.bind(mod .. " + E", hl.dsp.exec_cmd(file_manager))
 hl.bind(mod .. " + S", hl.dsp.exec_cmd(menu))
 hl.bind(mod .. " + X", hl.dsp.exec_cmd(code_editor))
+hl.bind(mod .. " + PERIOD", hl.dsp.exec_cmd("qs -c mine ipc call clipboard toggle"))
+
 hl.bind(mod .. " + C", hl.dsp.window.close())
 hl.bind(mod .. " + V", hl.dsp.window.float())
 hl.bind(mod .. " + F", hl.dsp.window.fullscreen())

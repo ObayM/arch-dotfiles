@@ -6,6 +6,7 @@ import Quickshell.Io
 import QtQuick
 
 ShellRoot {
+
     id: root
 
     property string token: ""
@@ -47,5 +48,18 @@ ShellRoot {
 
     Bar {
         token: root.token
+    }
+    Clipboard{
+        id:clipboard
+    }
+    IpcHandler {
+        target: 'clipboard'
+        function toggle(): void {
+            if(clipboard.opened){
+                clipboard.close()
+            }else{
+                clipboard.open()
+            }
+        }
     }
 }
