@@ -2,6 +2,7 @@ local mod = "SUPER"
 local terminal = "kitty"
 local file_manager = "dolphin"
 local menu = "hyprlauncher"
+local code_editor = "code"
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("QT_QPA_PLATFORM", "wayland")
@@ -50,7 +51,7 @@ end)
 hl.bind(mod .. " + T", hl.dsp.exec_cmd(terminal))
 hl.bind(mod .. " + E", hl.dsp.exec_cmd(file_manager))
 hl.bind(mod .. " + S", hl.dsp.exec_cmd(menu))
-hl.bind(mod .. " + X", hl.dsp.exec_cmd("code"))
+hl.bind(mod .. " + X", hl.dsp.exec_cmd(code_editor))
 hl.bind(mod .. " + C", hl.dsp.window.close())
 hl.bind(mod .. " + V", hl.dsp.window.float())
 hl.bind(mod .. " + F", hl.dsp.window.fullscreen())
