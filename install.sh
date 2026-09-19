@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGES=(hyprland quickshell kitty stow jq brightnessctl wireplumber hyprpolkitagent libsecret)
+PACKAGES=(hyprland quickshell kitty stow jq brightnessctl wireplumber hyprpolkitagent)
 STOW_PACKAGES=(hypr quickshell)
 MIN_HYPRLAND="0.55.0"
 
