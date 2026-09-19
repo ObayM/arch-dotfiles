@@ -12,16 +12,17 @@ Singleton {
     readonly property string fontFamily: "FiraCode Nerd Font"
 
     readonly property int barHeight: 38
+    readonly property int islandHeight: 30
     readonly property int margin: 10
     readonly property int radius: 18
     readonly property int pillRadius: 999
 
-    readonly property real surfaceOpacity: 0.68
+    readonly property real surfaceOpacity: 0.82
     readonly property color hairline: Qt.rgba(fg.r, fg.g, fg.b, 0.08)
 
-    readonly property color shadowColor: Qt.rgba(0, 0, 0, 0.45)
-    readonly property int shadowBlur: 32
-    readonly property int shadowOffsetY: 8
+    readonly property color shadowColor: Qt.rgba(0, 0, 0, 0.35)
+    readonly property int shadowBlur: 24
+    readonly property int shadowOffsetY: 5
 
     readonly property int animFast: 150
     readonly property int animMed: 220

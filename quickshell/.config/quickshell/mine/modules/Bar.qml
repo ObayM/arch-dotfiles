@@ -5,9 +5,12 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import Quickshell.Services.SystemTray
+import Quickshell.Services.UPower
+import Quickshell.Services.Pipewire
 import qs.config
 
 Variants {
@@ -15,15 +18,15 @@ Variants {
     required property string token
     model: Quickshell.screens
 
-    component Group: Item {
-        id: group
+    component Island: Item {
+        id: island
 
         property Item inner: null
-        property real hPadding: 12
+        property real hPadding: 14
         readonly property alias hovered: hoverHandler.hovered
 
-        implicitWidth: (group.inner ? group.inner.implicitWidth : 0) + hPadding * 2
-        implicitHeight: Appearance.barHeight - 12
+        implicitWidth: (island.inner ? island.inner.implicitWidth : 0) + hPadding * 2
+        implicitHeight: Appearance.islandHeight
         width: implicitWidth
         height: implicitHeight
 
@@ -34,8 +37,26 @@ Variants {
         Rectangle {
             anchors.fill: parent
             radius: Appearance.pillRadius
+            color: Qt.rgba(Appearance.surface.r, Appearance.surface.g, Appearance.surface.b, Appearance.surfaceOpacity)
+            border.width: 1
+            border.color: Appearance.hairline
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: Appearance.shadowColor
+                shadowBlur: Appearance.shadowBlur / 64
+                shadowVerticalOffset: Appearance.shadowOffsetY
+                shadowHorizontalOffset: 0
+                blurEnabled: false
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Appearance.pillRadius
             color: Appearance.fg
-            opacity: group.hovered ? 0.08 : 0
+            opacity: island.hovered ? 0.04 : 0
 
             Behavior on opacity {
                 NumberAnimation {
@@ -48,8 +69,8 @@ Variants {
     component Divider: Rectangle {
         Layout.preferredWidth: 1
         Layout.fillHeight: true
-        Layout.topMargin: 8
-        Layout.bottomMargin: 8
+        Layout.topMargin: 7
+        Layout.bottomMargin: 7
         radius: 0.5
         color: Appearance.hairline
     }
@@ -59,9 +80,10 @@ Variants {
 
         required property var modelData
         property bool showTracked: false
-        property bool exiting: false
         property string ptoken: root.token
         property string displayed_info: 'Hackatime'
+        property string netConnType: 'none'
+        property int netSignal: 0
 
         screen: modelData
 
@@ -72,10 +94,7 @@ Variants {
             interval: 5000
             running: false
             repeat: true
-            onTriggered: {
-                exiting = showTracked
-                showTracked = !showTracked
-            }
+            onTriggered: bar.showTracked = !bar.showTracked
         }
 
         Timer {
@@ -84,6 +103,59 @@ Variants {
             running: bar.ptoken !== ''
             repeat: true
             onTriggered: bar.fetchTodayTime()
+        }
+
+        Timer {
+            id: netRefreshTimer
+            interval: 30 * 1000
+            running: true
+            repeat: true
+            triggeredOnStart: true
+            onTriggered: bar.refreshNetwork()
+        }
+
+        function refreshNetwork() {
+            netTypeProcess.running = true
+        }
+
+        Process {
+            id: netMonitorProcess
+            running: true
+            command: ["nmcli", "monitor"]
+            stdout: SplitParser {
+                onRead: bar.refreshNetwork()
+            }
+        }
+
+        Process {
+            id: netTypeProcess
+            command: ["sh", "-c", "nmcli -t -f TYPE,STATE device status | grep ':connected$' | head -1"]
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    const line = this.text.trim()
+                    if (line.startsWith("wifi:")) {
+                        bar.netConnType = "wifi"
+                        netSignalProcess.running = true
+                    } else if (line.startsWith("ethernet:")) {
+                        bar.netConnType = "ethernet"
+                        bar.netSignal = 0
+                    } else {
+                        bar.netConnType = "none"
+                        bar.netSignal = 0
+                    }
+                }
+            }
+        }
+
+        Process {
+            id: netSignalProcess
+            command: ["sh", "-c", "nmcli -t -f active,signal dev wifi | grep '^yes:' | head -1"]
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    const value = parseInt(this.text.trim().split(":")[1])
+                    bar.netSignal = isNaN(value) ? 0 : value
+                }
+            }
         }
 
         function fetchTodayTime() {
@@ -126,46 +198,28 @@ Variants {
             precision: SystemClock.Minutes
         }
 
-        Rectangle {
-            id: surfaceBg
-            anchors.fill: parent
-            radius: Appearance.radius
-            color: Qt.rgba(Appearance.surface.r, Appearance.surface.g, Appearance.surface.b, Appearance.surfaceOpacity)
-            border.width: 1
-            border.color: Appearance.hairline
-
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: Appearance.shadowColor
-                shadowBlur: Appearance.shadowBlur / 64
-                shadowVerticalOffset: Appearance.shadowOffsetY
-                shadowHorizontalOffset: 0
-                blurEnabled: false
-            }
-        }
-
         Item {
             anchors.fill: parent
             anchors.leftMargin: 16
             anchors.rightMargin: 16
 
-            RowLayout {
+            Island {
+                id: leftIsland
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 12
+                inner: leftRow
 
-                Group {
-                    inner: wsContainer
+                RowLayout {
+                    id: leftRow
+                    anchors.centerIn: parent
+                    spacing: 14
 
                     Item {
                         id: wsContainer
 
-                        anchors.centerIn: parent
+                        Layout.alignment: Qt.AlignVCenter
                         implicitWidth: wsRow.implicitWidth
                         implicitHeight: 20
-                        width: implicitWidth
-                        height: implicitHeight
 
                         function syncIndicator(item: Item): void {
                             indicator.x = item.x - 8;
@@ -267,28 +321,28 @@ Variants {
                             }
                         }
                     }
-                }
 
-                Divider {
-                    visible: appLabel.text.length > 0
-                }
+                    Divider {
+                        visible: appLabel.text.length > 0
+                    }
 
-                Text {
-                    id: appLabel
-                    Layout.alignment: Qt.AlignVCenter
-                    text: ToplevelManager.activeToplevel?.appId ?? ""
-                    color: Appearance.fg
-                    opacity: 0.6
-                    font.family: Appearance.fontFamily
-                    font.pixelSize: 12
-                    font.capitalization: Font.Capitalize
-                    elide: Text.ElideRight
-                    Layout.maximumWidth: 200
+                    Text {
+                        id: appLabel
+                        Layout.alignment: Qt.AlignVCenter
+                        text: ToplevelManager.activeToplevel?.appId ?? ""
+                        color: Appearance.fg
+                        opacity: 0.6
+                        font.family: Appearance.fontFamily
+                        font.pixelSize: 12
+                        font.capitalization: Font.Capitalize
+                        elide: Text.ElideRight
+                        Layout.maximumWidth: 200
+                    }
                 }
             }
 
-            Group {
-                id: clockGroup
+            Island {
+                id: centerIsland
 
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
@@ -310,7 +364,7 @@ Variants {
 
                     Item {
                         clip: true
-                        Layout.preferredWidth: clockGroup.hovered ? expanded.implicitWidth + 8 : 0
+                        Layout.preferredWidth: centerIsland.hovered ? expanded.implicitWidth + 8 : 0
                         Layout.preferredHeight: expanded.implicitHeight
 
                         Behavior on Layout.preferredWidth {
@@ -324,7 +378,7 @@ Variants {
                             id: expanded
                             anchors.right: parent.right
                             spacing: 8
-                            opacity: clockGroup.hovered ? 1 : 0
+                            opacity: centerIsland.hovered ? 1 : 0
 
                             Behavior on opacity {
                                 NumberAnimation {
@@ -352,74 +406,242 @@ Variants {
                 }
             }
 
-            RowLayout {
+            Island {
+                id: rightIsland
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 12
+                inner: rightRow
 
-                Rectangle {
-                    id: ht_button
-                    color: '#010409'
-                    width: 100
-                    height: 25
-                    radius: 10
+                RowLayout {
+                    id: rightRow
+                    anchors.centerIn: parent
+                    spacing: 14
 
-                    MouseArea {
-                        id: htmouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onEntered: bar.exiting = true
-                        onExited: bar.exiting = false
-                        onClicked: Quickshell.execDetached(["xdg-open", "https://hackatime.hackclub.com"])
-                    }
-                    Image {
-                        source: 'ht_logo.png'
-                        width: 25
-                        height: 25
-                        anchors.verticalCenter: parent.verticalCenter
-                        x: bar.showTracked ? 0 : htmouseArea.containsMouse ? 0 : (parent.width - width) / 2
-                        Behavior on x {
-                            NumberAnimation {
-                                duration: bar.exiting ? 400 : 200
-                                easing.type: bar.exiting ? Easing.InCubic : Easing.OutCubic
-                            }
-                        }
-                        sourceSize.width: 126
-                        sourceSize.height: 126
-                    }
                     Text {
-                        text: bar.displayed_info
+                        id: networkIcon
+                        Layout.alignment: Qt.AlignVCenter
+                        text: bar.netConnType === "ethernet" ? "" : ""
                         color: Appearance.fg
-                        opacity: bar.showTracked ? 1 : htmouseArea.containsMouse ? 1 : 0
-                        scale: bar.showTracked ? 1 : htmouseArea.containsMouse ? 1 : 0
-
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.right: parent.right
-                        anchors.rightMargin: 6
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: bar.exiting ? 200 : 400
-                                easing.type: bar.exiting ? Easing.OutCubic : Easing.InCubic
-                            }
-                        }
-                        Behavior on scale {
-                            NumberAnimation {
-                                duration: bar.exiting ? 200 : 400
-                                easing.type: bar.exiting ? Easing.OutCubic : Easing.InCubic
-                            }
-                        }
-                        font.pixelSize: 14
+                        opacity: bar.netConnType === "none" ? 0.3 : (bar.netConnType === "wifi" ? Math.max(0.35, bar.netSignal / 100) : 0.85)
                         font.family: Appearance.fontFamily
-                    }
-                }
+                        font.pixelSize: 13
 
-                Group {
-                    inner: trayRow
-                    visible: SystemTray.items.values.length > 0
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: bar.refreshNetwork()
+                        }
+                    }
+
+                    Item {
+                        id: volumeWidget
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: volumeRow.implicitWidth
+                        implicitHeight: volumeRow.implicitHeight
+                        visible: sink !== null
+
+                        readonly property var sink: Pipewire.defaultAudioSink
+                        readonly property bool muted: volumeWidget.sink?.audio.muted ?? false
+                        readonly property int vol: Math.round((volumeWidget.sink?.audio.volume ?? 0) * 100)
+
+                        PwObjectTracker {
+                            objects: volumeWidget.sink ? [volumeWidget.sink] : []
+                        }
+
+                        RowLayout {
+                            id: volumeRow
+                            anchors.centerIn: parent
+                            spacing: 6
+
+                            Text {
+                                text: volumeWidget.muted ? "" : volumeWidget.vol > 50 ? "" : volumeWidget.vol > 0 ? "" : ""
+                                color: Appearance.fg
+                                opacity: volumeWidget.muted ? 0.4 : 0.85
+                                font.family: Appearance.fontFamily
+                                font.pixelSize: 14
+                            }
+
+                            Text {
+                                text: volumeWidget.muted ? "mute" : volumeWidget.vol + "%"
+                                color: Appearance.fg
+                                opacity: 0.85
+                                font.family: Appearance.fontFamily
+                                font.pixelSize: 12
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (volumeWidget.sink)
+                                    volumeWidget.sink.audio.muted = !volumeWidget.sink.audio.muted
+                            }
+                        }
+
+                        WheelHandler {
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                            onWheel: event => {
+                                if (!volumeWidget.sink)
+                                    return;
+                                const step = 0.05;
+                                const delta = event.angleDelta.y > 0 ? step : -step;
+                                volumeWidget.sink.audio.volume = Math.max(0, Math.min(1.5, volumeWidget.sink.audio.volume + delta));
+                            }
+                        }
+                    }
+
+                    Item {
+                        id: batteryWidget
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: batteryRow.implicitWidth
+                        implicitHeight: batteryRow.implicitHeight
+                        visible: UPower.displayDevice.isLaptopBattery
+
+                        readonly property alias hovered: batteryHover.hovered
+                        readonly property int pct: Math.round((UPower.displayDevice.percentage ?? 0) * 100)
+                        readonly property bool charging: UPower.displayDevice.state === UPowerDeviceState.Charging
+                        
+                        readonly property string timeText: {
+                            const secs = batteryWidget.charging ? UPower.displayDevice.timeToFull : UPower.displayDevice.timeToEmpty;
+                            if (!secs || secs <= 0)
+                                return "";
+                            const h = Math.floor(secs / 3600);
+                            const m = Math.round((secs % 3600) / 60);
+                            return h > 0 ? (h + "h " + m + "m") : (m + "m");
+                        }
+
+                        HoverHandler {
+                            id: batteryHover
+                        }
+
+                        RowLayout {
+                            id: batteryRow
+                            anchors.centerIn: parent
+                            spacing: 6
+
+                            Text {
+                                text: batteryWidget.charging ? "" : batteryWidget.pct >= 90 ? "" : batteryWidget.pct >= 60 ? "" : batteryWidget.pct >= 35 ? "" : batteryWidget.pct >= 15 ? "" : ""
+                                color: Appearance.fg
+                                opacity: batteryWidget.charging ? 1 : 0.85
+                                font.family: Appearance.fontFamily
+                                font.pixelSize: 14
+                            }
+
+                            Text {
+                                text: batteryWidget.pct + "%"
+                                color: Appearance.fg
+                                opacity: 0.85
+                                font.family: Appearance.fontFamily
+                                font.pixelSize: 12
+                            }
+
+                            Item {
+                                clip: true
+                                Layout.preferredWidth: batteryWidget.hovered && batteryTime.text.length > 0 ? batteryTime.implicitWidth + 6 : 0
+                                Layout.preferredHeight: batteryTime.implicitHeight
+
+                                Behavior on Layout.preferredWidth {
+                                    NumberAnimation {
+                                        duration: Appearance.animMed
+                                        easing.type: Appearance.easeOutCubic
+                                    }
+                                }
+
+                                Text {
+                                    id: batteryTime
+                                    text: batteryWidget.timeText
+                                    color: Appearance.fg
+                                    opacity: batteryWidget.hovered ? 0.6 : 0
+                                    font.family: Appearance.fontFamily
+                                    font.pixelSize: 12
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Appearance.animFast
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Divider {}
+
+                    Item {
+                        id: htWidget
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: htRow.implicitWidth
+                        implicitHeight: 18
+
+                        readonly property alias hovered: htHover.hovered
+                        readonly property bool revealed: bar.showTracked || htWidget.hovered
+
+                        HoverHandler {
+                            id: htHover
+                        }
+
+                        RowLayout {
+                            id: htRow
+                            anchors.centerIn: parent
+                            spacing: 6
+
+                            Image {
+                                source: 'ht_logo.png'
+                                Layout.preferredWidth: 16
+                                Layout.preferredHeight: 16
+                                sourceSize.width: 64
+                                sourceSize.height: 64
+                                opacity: 0.9
+                            }
+
+                            Item {
+                                clip: true
+                                Layout.preferredWidth: htWidget.revealed ? htLabel.implicitWidth : 0
+                                Layout.preferredHeight: htLabel.implicitHeight
+
+                                Behavior on Layout.preferredWidth {
+                                    NumberAnimation {
+                                        duration: Appearance.animMed
+                                        easing.type: Appearance.easeOutCubic
+                                    }
+                                }
+
+                                Text {
+                                    id: htLabel
+                                    text: bar.displayed_info
+                                    color: Appearance.fg
+                                    opacity: htWidget.revealed ? 0.85 : 0
+                                    font.pixelSize: 12
+                                    font.family: Appearance.fontFamily
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Appearance.animFast
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Quickshell.execDetached(["xdg-open", "https://hackatime.hackclub.com"])
+                        }
+                    }
+
+                    Divider {
+                        visible: SystemTray.items.values.length > 0
+                    }
 
                     RowLayout {
                         id: trayRow
-                        anchors.centerIn: parent
+                        Layout.alignment: Qt.AlignVCenter
+                        visible: SystemTray.items.values.length > 0
                         spacing: 12
 
                         Repeater {
