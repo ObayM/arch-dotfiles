@@ -1,5 +1,5 @@
 local mod = "SUPER"
-local terminal = "konsole"
+local terminal = "kitty"
 local file_manager = "dolphin"
 local menu = "hyprlauncher"
 
@@ -10,9 +10,9 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
 
 hl.config({
     general = {
-        gaps_in = 4,
-        gaps_out = 8,
-        border_size = 2,
+        gaps_in = 6,
+        gaps_out = 14,
+        border_size = 1,
         layout = "dwindle",
         col = {
             active_border = "#89b4fa",
@@ -20,9 +20,9 @@ hl.config({
         },
     },
     decoration = {
-        rounding = 8,
-        blur = { enabled = true, size = 6, passes = 2 },
-        shadow = { enabled = true, range = 12 },
+        rounding = 16,
+        blur = { enabled = true, size = 8, passes = 3, ignore_opacity = true },
+        shadow = { enabled = true, range = 20, render_power = 3, color = "rgba(00000055)" },
     },
     input = {
         kb_layout = "us,ara",
@@ -44,6 +44,7 @@ hl.animation({ leaf = "workspaces", enabled = true, speed = 4, bezier = "smooth"
 hl.on("hyprland.start", function()
     hl.exec_cmd("qs -c mine")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
+    hl.exec_cmd("hyprpaper")
 end)
 
 hl.bind(mod .. " + T", hl.dsp.exec_cmd(terminal))
@@ -78,5 +79,7 @@ for key, command in pairs({
 end
 
 hl.window_rule({ match = { class = "^(pavucontrol)$" }, float = true })
+
+hl.layer_rule({ name = "blur-bar", match = { namespace = "quickshell:bar" }, blur = true, ignore_alpha = true })
 
 pcall(dofile, os.getenv("HOME") .. "/.config/hypr/local.lua")

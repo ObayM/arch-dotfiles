@@ -2,8 +2,8 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGES=(hyprland quickshell kitty stow jq brightnessctl wireplumber hyprpolkitagent)
-STOW_PACKAGES=(hypr quickshell)
+PACKAGES=(hyprland kitty stow jq brightnessctl wireplumber hyprpolkitagent matugen hyprpaper)
+STOW_PACKAGES=(hypr quickshell matugen)
 MIN_HYPRLAND="0.55.0"
 
 die() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
