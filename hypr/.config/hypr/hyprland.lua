@@ -35,7 +35,9 @@ hl.config({
         },
     },
 })
-
+hl.on("hyprland.start", function ()
+    hl.exec_cmd('wl-paste --watch cliphist store')
+end)
 hl.curve("smooth", { type = "bezier", points = { { 0.05, 0.9 }, { 0.1, 1.0 } } })
 
 hl.animation({ leaf = "windows", enabled = true, speed = 4, bezier = "smooth" })
