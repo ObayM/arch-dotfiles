@@ -19,8 +19,8 @@ Singleton {
     readonly property int barHeight: 38
     readonly property int islandHeight: 30
     readonly property int margin: 10
-    readonly property int radius: 18
-    readonly property int pillRadius: 999
+    readonly property int radius: 8
+    readonly property int pillRadius: 10
 
     readonly property real surfaceOpacity: 0.82
     readonly property color hairline: Qt.rgba(fg.r, fg.g, fg.b, 0.08)

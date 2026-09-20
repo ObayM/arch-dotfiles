@@ -17,8 +17,27 @@ PanelWindow {
     screen: Quickshell.screens[0]
 
     WlrLayershell.namespace: "quickshell:notifications"
+    color: "transparent"
 
-    Repeater {
+    anchors {
+        top: true
+        right: true
+    }
+
+    margins {
+        top: Appearance.margin
+        right: Appearance.margin
+    }
+
+    implicitWidth: 340
+    implicitHeight: column.implicitHeight
+
+    ColumnLayout {
+        id: column
+        width: parent.width
+        spacing: 8
+
+        Repeater {
         model: NotificationsService.list.values
         delegate: Rectangle {
                     id: card
@@ -85,6 +104,8 @@ PanelWindow {
                         }
                     }
                 }
+        }
+    
     }
-
+   
 }
