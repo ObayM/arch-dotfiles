@@ -15,7 +15,7 @@ import Quickshell.Services.Pipewire
 import Quickshell.Services.Notifications
 import qs.modules.services
 import qs.config
-import qs.modules.common 
+import qs.modules.common
 
 Variants {
     id: root
@@ -221,7 +221,7 @@ Variants {
                     Item {
                         id: wsContainer
 
-                        readonly property int shownCount: 10
+                        readonly property int shownCount: 6
                         readonly property int btnW: 22
                         readonly property int wsMargin: 2
                         readonly property int activeSize: btnW - wsMargin * 2
@@ -374,6 +374,13 @@ Variants {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
                 inner: clockRow
+                
+                onHoveredChanged: CommandCenterState.barHovered = hovered
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: CommandCenterState.pinned = !CommandCenterState.pinned // so this works as a toggle when clicking on it :)
+                }
 
                 RowLayout {
                     id: clockRow
