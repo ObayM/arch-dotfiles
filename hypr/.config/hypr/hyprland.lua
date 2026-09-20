@@ -53,7 +53,6 @@ hl.animation({ leaf = "workspaces", enabled = true, speed = 4, bezier = "smooth"
 hl.on("hyprland.start", function()
     hl.exec_cmd("qs -c mine")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
-    hl.exec_cmd("hyprpaper")
 end)
 
 hl.bind(mod .. " + T", hl.dsp.exec_cmd(terminal))

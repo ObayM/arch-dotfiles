@@ -68,4 +68,6 @@ ShellRoot {
     Notifications {}
     Osd {}
     CommandCenter {}
+
+    Wallpaper {}
 }
