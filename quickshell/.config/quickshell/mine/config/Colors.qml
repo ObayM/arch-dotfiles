@@ -12,6 +12,16 @@ Singleton {
     property color fg: "#cdd6f4"
     property color accent: "#89b4fa"
 
+    function mix(a: color, b: color, t: real): color {
+        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1);
+    }
+
+    property color surfaceLow: mix(root.bg, root.surface, 0.5)
+    property color surfaceHigh: mix(root.surface, root.fg, 0.06)
+    property color accentContainer: mix(root.bg, root.accent, 0.35)
+    property color onAccentContainer: mix(root.fg, root.accent, 0.25)
+    property color outlineVariant: mix(root.surface, root.fg, 0.14)
+
     function apply(content: string): void {
         if (!content.length)
             return;
@@ -25,6 +35,13 @@ Singleton {
                 root.fg = c.fg;
             if (c.accent)
                 root.accent = c.accent;
+            root.surfaceLow = c.surfaceLow ?? root.mix(root.bg, root.surface, 0.5);
+            root.surfaceHigh = c.surfaceHigh ?? root.mix(root.surface, root.fg, 0.06);
+
+            root.accentContainer = c.accentContainer ?? root.mix(root.bg, root.accent, 0.35);
+            
+            root.onAccentContainer = c.onAccentContainer ?? root.mix(root.fg, root.accent, 0.25);
+            root.outlineVariant = c.outlineVariant ?? root.mix(root.surface, root.fg, 0.14);
         } catch (e) {
             console.warn("Colors: failed to parse matugen output:", e);
         }

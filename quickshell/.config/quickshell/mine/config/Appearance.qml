@@ -6,8 +6,13 @@ import Quickshell
 Singleton {
     readonly property color bg: Colors.bg
     readonly property color surface: Colors.surface
+    readonly property color surfaceLow: Colors.surfaceLow
+    readonly property color surfaceHigh: Colors.surfaceHigh
     readonly property color fg: Colors.fg
     readonly property color accent: Colors.accent
+    readonly property color accentContainer: Colors.accentContainer
+    readonly property color onAccentContainer: Colors.onAccentContainer
+    readonly property color outlineVariant: Colors.outlineVariant
 
     readonly property string fontFamily: "FiraCode Nerd Font"
 

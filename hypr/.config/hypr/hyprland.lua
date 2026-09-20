@@ -1,7 +1,7 @@
 local mod = "SUPER"
 local terminal = "kitty"
 local file_manager = "dolphin"
-local menu = "hyprlauncher"
+local menu = "qs -c mine ipc call launcher toggle"
 local code_editor = "code"
 
 hl.env("XCURSOR_SIZE", "24")
@@ -25,6 +25,7 @@ hl.config({
         blur = { enabled = true, size = 8, passes = 3, ignore_opacity = true },
         shadow = { enabled = true, range = 20, render_power = 3, color = "rgba(00000055)" },
     },
+
     input = {
         kb_layout = "us,ara",
         kb_options = "grp:alt_shift_toggle",
@@ -35,6 +36,7 @@ hl.config({
         },
     },
 })
+
 hl.on("hyprland.start", function ()
     hl.exec_cmd('wl-paste --watch cliphist store')
 end)
@@ -52,10 +54,11 @@ end)
 
 hl.bind(mod .. " + T", hl.dsp.exec_cmd(terminal))
 hl.bind(mod .. " + E", hl.dsp.exec_cmd(file_manager))
-hl.bind(mod .. " + S", hl.dsp.exec_cmd(menu))
 hl.bind(mod .. " + X", hl.dsp.exec_cmd(code_editor))
 hl.bind(mod .. " + PERIOD", hl.dsp.exec_cmd("qs -c mine ipc call clipboard toggle"))
 
+hl.bind(mod .. " + SUPER_L", hl.dsp.exec_cmd(menu), { release = true })
+hl.bind(mod .. " + SUPER_R", hl.dsp.exec_cmd(menu), { release = true })
 hl.bind(mod .. " + C", hl.dsp.window.close())
 hl.bind(mod .. " + V", hl.dsp.window.float())
 hl.bind(mod .. " + F", hl.dsp.window.fullscreen())
@@ -86,5 +89,6 @@ end
 hl.window_rule({ match = { class = "^(pavucontrol)$" }, float = true })
 
 hl.layer_rule({ name = "blur-bar", match = { namespace = "quickshell:bar" }, blur = true, ignore_alpha = true })
+hl.layer_rule({ name = "blur-launcher", match = { namespace = "quickshell:launcher" }, blur = true, ignore_alpha = true })
 
 pcall(dofile, os.getenv("HOME") .. "/.config/hypr/local.lua")

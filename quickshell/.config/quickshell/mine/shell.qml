@@ -62,4 +62,5 @@ ShellRoot {
             }
         }
     }
+    Launcher {}
 }
