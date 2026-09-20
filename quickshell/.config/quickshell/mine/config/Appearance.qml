@@ -35,4 +35,19 @@ Singleton {
     readonly property int animMed: 220
     readonly property int animSlow: 320
     readonly property int easeOutCubic: Easing.OutCubic
+
+    readonly property var wallpaperTransitions: [
+        {
+            name: "ripple",
+            duration: 1100
+        },
+        {
+            name: "dissolve",
+            duration: 900
+        },
+        {
+            name: "glitch",
+            duration: 650
+        }
+    ]
 }
