@@ -16,7 +16,8 @@ import qs.modules.common
 
 PanelWindow {
     id: root
-    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null    
+    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
+    visible: root.open || card.opacity > 0
     color: 'transparent'
 
     WlrLayershell.namespace: 'quickshell:osd'
