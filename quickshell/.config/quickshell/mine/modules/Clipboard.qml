@@ -25,7 +25,6 @@ PanelWindow {
                 var lines = output.trim().split('\n')
                 root.clipboardItems = lines.map(function(line) {
                     var parts = line.split("\t")
-                    console.log(parts[1])
                     return {
                         id: parts[0],
                         text: parts[1]
@@ -58,10 +57,19 @@ PanelWindow {
                 width: ListView.view.width
                 height:50
                 radius:8
+                color: 'red'
                 Text {
                     anchors.fill: parent
                     text: modelData.text
                     color: 'black'
+                    wrapMode: Text.Wrap
+                }
+                MouseArea {
+                    onClicked: function (){
+                        console.log(modelData.text)
+                        console.log('asdfsadf')
+
+                    }
                 }
             }
         }
