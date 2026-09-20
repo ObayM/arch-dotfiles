@@ -2,6 +2,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import QtQuick.Controls
+import qs.config
 
 PanelWindow {
     id:root
@@ -64,9 +65,6 @@ PanelWindow {
         running:false
         stdout: StdioCollector {
             onStreamFinished:{
-
-                console.log('ture')
-                console.log(text)
                 copyProcess.command = ['wl-copy', text]
                 typeClipboardSelectionProcess.command = ["wtype", "-M", "ctrl" ,"v", "-m", 'ctrl']
                 copyProcess.running = true
@@ -76,23 +74,28 @@ PanelWindow {
     }
     Rectangle {
         anchors.fill: parent
+        color:  Qt.rgba(Appearance.bg.r, Appearance.bg.g, Appearance.bg.b, 1.0)
         ListView {
             anchors.fill: parent
             anchors.margins: 15
             model: root.clipboardItems
-            spacing:8
+            spacing:15
             delegate: Rectangle {
                 required property var modelData
                 width: ListView.view.width
-                height:50
+                height:70
                 radius:3
-                color: 'red'
+                color:Qt.rgba(Appearance.bg.r, Appearance.bg.g, Appearance.bg.b, 0.70)
+                border.width:1
+                border.color: Appearance.onAccentContainer
+                
                 Text {
                     anchors.fill: parent
+                    anchors.margins: 5
+                    color: Appearance.fg
                     verticalAlignment: Text.verticalAlignment
                     horizontalAlignment: Text.horizontalAlignment
                     text: modelData.text
-                    color: 'black'
                     wrapMode: Text.Wrap
                 }
                 MouseArea {
