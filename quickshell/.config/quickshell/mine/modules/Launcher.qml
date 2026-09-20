@@ -202,7 +202,6 @@ PanelWindow {
                     iconSize: 19
                 }
                 
-
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true

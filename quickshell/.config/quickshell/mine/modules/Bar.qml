@@ -221,87 +221,106 @@ Variants {
                     Item {
                         id: wsContainer
 
-                        Layout.alignment: Qt.AlignVCenter
-                        implicitWidth: wsRow.implicitWidth
-                        implicitHeight: 20
+                        readonly property int shownCount: 10
+                        readonly property int btnW: 22
+                        readonly property int wsMargin: 2
+                        readonly property int activeSize: btnW - wsMargin * 2
 
-                        function syncIndicator(item: Item): void {
-                            indicator.x = item.x - 8;
-                            indicator.width = item.width + 16;
+                        readonly property HyprlandMonitor monitor: Hyprland.monitorFor(bar.modelData)
+                        readonly property int activeWs: monitor?.activeWorkspace?.id ?? 1
+                        readonly property int group: Math.floor((activeWs - 1) / shownCount)
+                        readonly property int activeIndex: (activeWs - 1) % shownCount
+
+                        property real idxLead: activeIndex
+                        property real idxTrail: activeIndex
+
+                        Behavior on idxLead {
+                            NumberAnimation { duration: 100; easing.type: Easing.OutSine }
                         }
+
+                        Behavior on idxTrail {
+                            NumberAnimation { duration: 300; easing.type: Easing.OutSine }
+                        }
+
+                        property var occupied: []
+
+                        function wsIdAt(i) {
+                             return wsContainer.group * wsContainer.shownCount + i + 1 
+                        }
+
+                        function updateOccupied() {
+                            let arr = [];
+                            for (let i = 0; i < wsContainer.shownCount; i++) {
+
+                                const w = Hyprland.workspaces.values.find(ws => ws.id === wsContainer.wsIdAt(i));
+
+                                arr.push(!!w && (w.toplevels?.values.length ?? 0) > 0);
+                            }
+                            wsContainer.occupied = arr;
+                        }
+
+                        Component.onCompleted: updateOccupied()
+                        onGroupChanged: updateOccupied()
+
+                        Connections {
+                            target: Hyprland.workspaces
+                            function onValuesChanged() { wsContainer.updateOccupied() }
+                        }
+                        Connections {
+                            target: ToplevelManager.toplevels
+                            function onValuesChanged() { wsContainer.updateOccupied() }
+                        }
+
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: shownCount * btnW
+                        implicitHeight: 20
 
                         Rectangle {
                             id: indicator
                             anchors.verticalCenter: parent.verticalCenter
-                            height: 20
-                            radius: Appearance.pillRadius
-                            color: Appearance.accent
-                            x: 0
-                            width: 0
+                            x: Math.min(wsContainer.idxLead, wsContainer.idxTrail) * wsContainer.btnW + wsContainer.wsMargin
+                            width: Math.abs(wsContainer.idxLead - wsContainer.idxTrail) * wsContainer.btnW + wsContainer.activeSize
 
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: Appearance.animMed
-                                    easing.type: Appearance.easeOutCubic
-                                }
-                            }
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: Appearance.animMed
-                                    easing.type: Appearance.easeOutCubic
-                                }
-                            }
+                            height: wsContainer.activeSize
+                            radius: height / 2
+                            color: Appearance.accent
                         }
 
                         Row {
-                            id: wsRow
                             anchors.fill: parent
-                            spacing: 14
+                            spacing: 0
 
                             Repeater {
-                                model: Hyprland.workspaces.values
+                                model: wsContainer.shownCount
 
                                 Item {
                                     id: ws
+                                    required property int index
+                                    readonly property int wsId: wsContainer.wsIdAt(index)
 
-                                    required property var modelData
-                                    readonly property bool active: Hyprland.focusedWorkspace?.id === ws.modelData.id
-                                    readonly property bool occupied: (ws.modelData.toplevels?.values.length ?? 0) > 0
+                                    readonly property bool active: index === wsContainer.activeIndex
+                                    readonly property bool occupied: wsContainer.occupied[index] ?? false
 
-                                    width: label.implicitWidth
-                                    height: wsRow.height
-
-                                    onActiveChanged: if (ws.active) wsContainer.syncIndicator(ws)
-                                    onXChanged: if (ws.active) wsContainer.syncIndicator(ws)
-                                    Component.onCompleted: if (ws.active) wsContainer.syncIndicator(ws)
+                                    width: wsContainer.btnW
+                                    height: parent.height
 
                                     Text {
-                                        id: label
                                         anchors.centerIn: parent
-                                        text: ws.modelData.id
+                                        text: ws.wsId
                                         color: ws.active ? Appearance.bg : Appearance.fg
-                                        opacity: ws.active ? 1 : (ws.occupied ? 0.7 : 0.3)
+                                        opacity: ws.active ? 1 : (ws.occupied ? 0.7 : 0.25)
                                         font.family: Appearance.fontFamily
                                         font.pixelSize: 12
                                         font.bold: ws.active
 
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: Appearance.animMed
-                                            }
-                                        }
-                                        Behavior on opacity {
-                                            NumberAnimation {
-                                                duration: Appearance.animMed
-                                            }
-                                        }
+                                        Behavior on color { ColorAnimation { duration: Appearance.animMed } }
+                                        Behavior on opacity { NumberAnimation { duration: Appearance.animMed } }
                                     }
 
                                     MouseArea {
                                         anchors.fill: parent
-                                        anchors.margins: -4
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: Hyprland.dispatch("hl.dsp.focus({workspace = " + ws.modelData.id + "})")
+                                        onClicked: Hyprland.dispatch("hl.dsp.focus({workspace = " + ws.wsId + "})")
                                     }
                                 }
                             }
@@ -312,15 +331,19 @@ Variants {
 
                             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                             onWheel: event => {
-                                acc += event.angleDelta.y;
+                                const d = event.angleDelta.y;
+                                
+                                if (d === 0)
+                                    return;
+                                
+                                if (acc !== 0 && Math.sign(acc) !== Math.sign(d))
+                                    acc = 0;
+                                
+                                acc += d;
+
                                 if (Math.abs(acc) < 120)
                                     return;
-                                const scenePos = wsContainer.mapToItem(null, event.x, event.y);
-                                const cx = Math.round(bar.modelData.x + scenePos.x);
-                                const cy = Math.round(bar.modelData.y + scenePos.y);
-
                                 Hyprland.dispatch(acc > 0 ? 'hl.dsp.focus({workspace = "r-1"})' : 'hl.dsp.focus({workspace = "r+1"})');
-                                Hyprland.dispatch(`hl.dsp.cursor.move({x = ${cx}, y = ${cy}})`);
                                 acc = 0;
                             }
                         }
