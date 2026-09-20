@@ -10,6 +10,8 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.config
 
+import qs.modules.common 
+
 PanelWindow {
     id: launcher
 
@@ -193,14 +195,13 @@ PanelWindow {
                 Layout.rightMargin: 8
                 spacing: 10
 
-                Text {
-                    text: ""
+                MaterialSymbol {
+                    icon: "search"
                     color: Appearance.accent
                     opacity: 0.9
-                    font.pixelSize: 17
-                    font.family: Appearance.fontFamily
+                    iconSize: 19
                 }
-
+                
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -235,7 +236,7 @@ PanelWindow {
 
                         Keys.onEscapePressed: launcher.open = false
                         Keys.onUpPressed: launcher.selected = Math.max(0, launcher.selected - 1)
-                        
+
                         Keys.onDownPressed: launcher.selected = Math.min(launcher.results.length - 1, launcher.selected + 1)
                         Keys.onReturnPressed: launcher.launch(launcher.results[launcher.selected])
                         Keys.onEnterPressed: launcher.launch(launcher.results[launcher.selected])
