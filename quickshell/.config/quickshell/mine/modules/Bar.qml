@@ -79,7 +79,7 @@ Variants {
             bottomLeftRadius: island.bottomRadius
             bottomRightRadius: island.bottomRadius
             color: Appearance.fg
-            opacity: island.hovered || (island === centerIsland && CommandCenterState.visible) ? 0.04 : 0
+            opacity: island.hovered || (island === centerIsland && bar.ccVisible) ? 0.04 : 0
 
             Behavior on opacity {
                 NumberAnimation {
@@ -100,6 +100,8 @@ Variants {
 
     PanelWindow {
         id: bar
+
+        readonly property bool ccVisible: CommandCenterState.visible && CommandCenterState.screen?.name === bar.modelData.name
 
         required property var modelData
         property bool showTracked: false
@@ -390,16 +392,25 @@ Variants {
             Island {
                 id: centerIsland
 
-                readonly property bool expandedState: hovered || CommandCenterState.visible
+                readonly property bool expandedState: hovered || bar.ccVisible
 
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
                 inner: clockRow
 
-                bottomRadius: CommandCenterState.visible ? 0 : Appearance.pillRadius
+                bottomRadius:  bar.ccVisible ? 0 : Appearance.pillRadius
 
                 onWidthChanged: CommandCenterState.pillWidth = width
-                onHoveredChanged: CommandCenterState.barHovered = hovered
+
+                onHoveredChanged: {
+                    if (hovered) {
+                        CommandCenterState.screen = bar.modelData;
+                        CommandCenterState.barHovered = true;
+                    } else if (CommandCenterState.screen?.name === bar.modelData.name) {
+                        CommandCenterState.barHovered = false;
+                    }
+                }
+
                 Component.onCompleted: CommandCenterState.pillWidth = width
 
                 MouseArea {

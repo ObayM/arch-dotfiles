@@ -11,7 +11,7 @@ import QtQuick.Shapes
 PanelWindow {
     id: root
 
-    screen: Quickshell.screens[0]
+    screen: CommandCenterState.screen ?? Quickshell.screens[0]
     color: 'transparent'
     visible: mapped
 

@@ -8,6 +8,7 @@ import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 
 import Quickshell.Io
+import Quickshell.Hyprland
 
 import qs.modules.services
 import qs.config
@@ -15,7 +16,7 @@ import qs.modules.common
 
 PanelWindow {
     id: root
-    screen: Quickshell.screens[0]
+    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null    
     color: 'transparent'
 
     WlrLayershell.namespace: 'quickshell:osd'

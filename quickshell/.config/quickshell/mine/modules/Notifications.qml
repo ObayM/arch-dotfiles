@@ -10,12 +10,11 @@ import Quickshell.Services.Notifications
 import qs.modules.services
 import qs.config
 
-
+import Quickshell.Hyprland
 PanelWindow {
     id: root
 
-    screen: Quickshell.screens[0]
-
+    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null    
     WlrLayershell.namespace: "quickshell:notifications"
     color: "transparent"
 
