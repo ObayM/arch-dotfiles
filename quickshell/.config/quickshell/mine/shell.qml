@@ -4,6 +4,7 @@ import Quickshell
 import qs.modules
 import Quickshell.Io
 import QtQuick
+import "./modules/calendar"
 
 ShellRoot {
 
@@ -69,6 +70,7 @@ ShellRoot {
     Osd {}
     CommandCenter {}
 
+    CalendarWidget {}
     Wallpaper {}
 
     WallpaperPicker {
