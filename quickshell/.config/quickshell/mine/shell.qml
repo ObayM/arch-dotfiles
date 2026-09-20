@@ -49,20 +49,22 @@ ShellRoot {
     Bar {
         token: root.token
     }
-    Clipboard{
-        id:clipboard
-    }
+
     IpcHandler {
         target: 'clipboard'
+
         function toggle(): void {
-            if(clipboard.opened){
-                clipboard.close()
-            }else{
-                clipboard.open()
-            }
+            if (launcher.open && launcher.clipMode)
+                launcher.open = false;
+            else
+                launcher.show(launcher.clipPrefix);
         }
     }
-    Launcher {}
+    
+    Launcher {
+        id: launcher
+    }
+
     Notifications {}
     Osd {}
     CommandCenter {}

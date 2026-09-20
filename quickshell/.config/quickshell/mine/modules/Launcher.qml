@@ -11,6 +11,7 @@ import Quickshell.Widgets
 import qs.config
 
 import qs.modules.common 
+import qs.modules.services
 
 PanelWindow {
     id: launcher
@@ -21,6 +22,31 @@ PanelWindow {
     property bool open: false
     property string query: ""
     property int selected: 0
+    
+    readonly property string clipPrefix: ";"
+    readonly property bool clipMode: launcher.query.startsWith(launcher.clipPrefix)
+
+    property var results: {
+        if (launcher.clipMode) {
+            const q = launcher.query.slice(launcher.clipPrefix.length).trim();
+            if (!q.length)
+                return Cliphist.entries;
+            
+            return Cliphist.entries.map(e => ({
+                        entry: e,
+                        s: launcher.matchScore(Cliphist.clean(e), q)
+                    })).filter(r => r.s >= 0).sort((a, b) => b.s - a.s).map(r => r.entry);
+        }
+
+        if (!launcher.query.length)
+            return launcher.apps;
+
+        return launcher.apps.map(e => ({
+                    entry: e,
+                    s: launcher.matchScore(e.name, launcher.query)
+                })).filter(r => r.s >= 0).sort((a, b) => b.s - a.s).map(r => r.entry);
+    }
+    
 
     property var apps: {
         const seen = new Set();
@@ -54,13 +80,17 @@ PanelWindow {
         return 10;
     }
 
-    property var results: {
-        if (!launcher.query.length)
-            return launcher.apps;
-        return launcher.apps.map(e => ({
-                    entry: e,
-                    s: launcher.matchScore(e.name, launcher.query)
-                })).filter(r => r.s >= 0).sort((a, b) => b.s - a.s).map(r => r.entry);
+    function activate(item) {
+        if (!item)
+            return;
+
+        if (launcher.clipMode)
+            Cliphist.paste(item);
+        
+        else
+            item.execute();
+        
+        launcher.open = false
     }
 
     function reset() {
@@ -68,6 +98,19 @@ PanelWindow {
         selected = 0;
         searchField.text = "";
     }
+
+    function show(prefill, forcedScreen) {
+        launcher.targetScreen = forcedScreen ?? (Array.from(Quickshell.screens).find(s => s.name === (Hyprland.focusedMonitor?.name ?? "")) ?? Quickshell.screens[0]);
+
+        reset();
+
+
+        if (prefill !== undefined)
+            searchField.text = prefill;
+        launcher.open = true;
+        Qt.callLater(() => searchField.forceActiveFocus());
+    }
+
 
     function launch(entry) {
         if (!entry)
@@ -92,12 +135,7 @@ PanelWindow {
         right: true
     }
 
-    function show() {
-        launcher.targetScreen = Array.from(Quickshell.screens).find(s => s.name === (Hyprland.focusedMonitor?.name ?? "")) ?? Quickshell.screens[0];
-        reset();
-        launcher.open = true;
-        Qt.callLater(() => searchField.forceActiveFocus());
-    }
+
 
     IpcHandler {
         target: "launcher"
@@ -114,6 +152,30 @@ PanelWindow {
         function close(): void {
             launcher.open = false;
         }
+    }
+
+    Connections {
+        target: ClipboardState
+
+         function onOpenRequested(targetScreen) {
+            launcher.show(launcher.clipPrefix, targetScreen);
+        }
+
+        function onCloseRequested() {
+            launcher.open = false;
+        }
+    }
+
+     Binding {
+        target: ClipboardState
+        property: "active"
+        value: launcher.open && launcher.clipMode
+    }
+
+    Binding {
+        target: ClipboardState
+        property: "screen"
+        value: launcher.targetScreen
     }
 
     MouseArea {
@@ -196,18 +258,18 @@ PanelWindow {
                 spacing: 10
 
                 MaterialSymbol {
-                    icon: "search"
+                    icon: launcher.clipMode ? "content_paste" : "search"
                     color: Appearance.accent
                     opacity: 0.9
                     iconSize: 19
                 }
-                
+
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
                     Text {
-                        text: "Search apps…"
+                        text: launcher.clipMode ? "Search clipboard…" : "Search apps…"
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         color: Appearance.fg
@@ -238,8 +300,8 @@ PanelWindow {
                         Keys.onUpPressed: launcher.selected = Math.max(0, launcher.selected - 1)
 
                         Keys.onDownPressed: launcher.selected = Math.min(launcher.results.length - 1, launcher.selected + 1)
-                        Keys.onReturnPressed: launcher.launch(launcher.results[launcher.selected])
-                        Keys.onEnterPressed: launcher.launch(launcher.results[launcher.selected])
+                        Keys.onReturnPressed: launcher.activate(launcher.results[launcher.selected])
+                        Keys.onEnterPressed: launcher.activate(launcher.results[launcher.selected])
                     }
                 }
             }
@@ -321,14 +383,23 @@ PanelWindow {
                         spacing: 12
 
                         IconImage {
+                            visible: !launcher.clipMode
                             Layout.preferredWidth: 22
                             Layout.preferredHeight: 22
-                            source: Quickshell.iconPath(row.modelData.icon, "image-missing")
+                            source: launcher.clipMode ? "" : Quickshell.iconPath(row.modelData.icon, "image-missing")
+                        }
+
+                        MaterialSymbol {
+                            visible: launcher.clipMode
+                            icon: "content_copy"
+                            iconSize: 17
+                            color: row.isSelected ? Appearance.onAccentContainer : Appearance.fg
+                            opacity: 0.5
                         }
 
                         Text {
                             Layout.fillWidth: true
-                            text: row.modelData.name
+                            text: launcher.clipMode ? Cliphist.clean(row.modelData).replace(/\s+/g, " ") : row.modelData.name
                             color: row.isSelected ? Appearance.onAccentContainer : Appearance.fg
                             font.weight: row.isSelected ? Font.DemiBold : Font.Normal
                             elide: Text.ElideRight
@@ -346,9 +417,8 @@ PanelWindow {
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: launcher.launch(row.modelData)
+                        onClicked: launcher.activate(row.modelData)
                     }
-                }
 
                 Text {
                     anchors.centerIn: parent
@@ -362,4 +432,5 @@ PanelWindow {
             }
         }
     }
+}
 }

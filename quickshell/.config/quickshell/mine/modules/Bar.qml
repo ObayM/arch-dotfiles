@@ -26,8 +26,10 @@ Variants {
         id: island
 
         property Item inner: null
+        property bool active: false
         property real hPadding: 14
         property real bottomRadius: Appearance.pillRadius
+
         readonly property alias hovered: hoverHandler.hovered
 
         implicitWidth: (island.inner ? island.inner.implicitWidth : 0) + hPadding * 2
@@ -79,7 +81,7 @@ Variants {
             bottomLeftRadius: island.bottomRadius
             bottomRightRadius: island.bottomRadius
             color: Appearance.fg
-            opacity: island.hovered || (island === centerIsland && bar.ccVisible) ? 0.04 : 0
+            opacity: island.hovered || island.active ? 0.04 : 0
 
             Behavior on opacity {
                 NumberAnimation {
@@ -102,6 +104,7 @@ Variants {
         id: bar
 
         readonly property bool ccVisible: CommandCenterState.visible && CommandCenterState.screen?.name === bar.modelData.name
+        readonly property bool clipVisible: ClipboardState.active && ClipboardState.screen?.name === bar.modelData.name
 
         required property var modelData
         property bool showTracked: false
@@ -391,7 +394,6 @@ Variants {
 
             Island {
                 id: centerIsland
-
                 readonly property bool expandedState: hovered || bar.ccVisible
 
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -472,6 +474,51 @@ Variants {
                                 font.pixelSize: 12
                             }
                         }
+                    }
+                }
+            }
+
+            Island {
+                id: clipIsland
+
+                anchors.right: rightIsland.left
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                inner: clipRow
+                hPadding: 10
+                active: bar.clipVisible
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: ClipboardState.toggle(bar.modelData)
+                }
+
+                RowLayout {
+                    id: clipRow
+                    anchors.centerIn: parent
+                    spacing: 6
+
+                    MaterialSymbol {
+                        icon: "content_paste"
+                        color: bar.clipVisible ? Appearance.accent : Appearance.fg
+                        opacity: bar.clipVisible ? 1 : 0.85
+                        iconSize: 15
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Appearance.animFast
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: Cliphist.entries.length
+                        visible: Cliphist.entries.length > 0
+                        color: Appearance.fg
+                        opacity: 0.6
+                        font.family: Appearance.fontFamily
+                        font.pixelSize: 12
                     }
                 }
             }
