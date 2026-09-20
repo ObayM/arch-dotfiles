@@ -4,6 +4,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
+import qs.config
+
 Singleton {
     id: root
 
@@ -13,7 +15,14 @@ Singleton {
 
     property point originGlobal: Qt.point(0, 0)
 
+    property var transition: Appearance.wallpaperTransitions[0]
+
     property string current: ""
+
+    function pickTransition(): void {
+        const list = Appearance.wallpaperTransitions;
+        root.transition = list[Math.floor(Math.random() * list.length)];
+    }
 
     function setAt(path: string, globalPoint: point): void {
         root.originGlobal = globalPoint;
@@ -58,8 +67,11 @@ Singleton {
 
     function apply(value: string): void {
         const path = String(value).trim();
-        if(path.length)
-            root.current = path;
+        if (!path.length || path === root.current)
+            return;
+
+        root.pickTransition();
+        root.current = path;
     }
     
     FileView {

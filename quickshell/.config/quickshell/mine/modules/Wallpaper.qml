@@ -116,7 +116,7 @@ Variants {
             property vector2d origin: win.origin
             property color accent: Appearance.accent
 
-            fragmentShader: Qt.resolvedUrl("../shaders/ripple.frag.qsb")
+            fragmentShader: Qt.resolvedUrl("../shaders/" + Wallpapers.transition.name + ".frag.qsb")
         }
         
         NumberAnimation {
@@ -126,7 +126,7 @@ Variants {
             property: "progress"
             from: 0
             to: 1
-            duration: 1100
+            duration: Wallpapers.transition.duration
             easing.type: Easing.Linear
 
             onStarted: win.origin = win.resolveOrigin()
