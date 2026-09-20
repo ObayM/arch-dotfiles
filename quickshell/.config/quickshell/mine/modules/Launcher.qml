@@ -40,8 +40,10 @@ PanelWindow {
 
         if (!launcher.query.length)
             return launcher.apps;
-        
-        console.log(launcher.query)
+        if (hasMultipleDigits(launcher.query)){
+            var calcation = evaluateExpression([String(launcher.query)])
+            console.log(calcation)
+        }
         return launcher.apps.map(e => ({
                     entry: e,
                     s: launcher.matchScore(e.name, launcher.query)
@@ -61,7 +63,9 @@ PanelWindow {
         out.sort((a, b) => a.name.localeCompare(b.name));
         return out;
     }
-
+    function hasMultipleDigits(str){
+        return /\d{2,}/.test(str)
+    }
     function matchScore(name, q) {
         name = name.toLowerCase();
         q = q.toLowerCase();
@@ -187,16 +191,16 @@ PanelWindow {
     let gropednum;
     let secondnum;
     if (nextopindex  == operations.length) {
-            secondnum = operations.slice(index + 1).join('').replaceAll(",", "");
+            secondnum = operations.slice(index + 1).join('').replace(/,/g, "");
     } else {
         if(prevopin == 'isolatiedop'){
-                gropednum = operations.slice(0, nextopindex).join().replaceAll(",", "");
+                gropednum = operations.slice(0, nextopindex).join().replace(/,/g, "");
                 operations[0] = gropednum
                 operations.splice(1, nextopindex - 1)
                 prevopin = prevopin   
     }
-        secondnum = operations.slice(index + 1, nextopindex).join('').replaceAll(",", "");}
-        gropednum = operations.slice(prevopin + 1, index).join().replaceAll(",", "");
+        secondnum = operations.slice(index + 1, nextopindex).join('').replace(/,/g, "");}
+        gropednum = operations.slice(prevopin + 1, index).join().replace(/,/g, "");
     return { before: gropednum, after: secondnum , prev: (prevopin + 1) ,nextopindex: nextopindex  }; 
     }
 
@@ -234,7 +238,7 @@ PanelWindow {
     }
 
     function evaluateExpression(operations) {
-          operations = operations[0].replaceAll(" ", "").replaceAll('−',"-").replaceAll('*','×').replaceAll('/','÷').split('');
+          operations = (String(operations[0])).replace(/ /g, "").replace(/−/g,"-").replace(/\*/g,'×').replace('/\//g','÷').split('');
           operations = checkForDuplicate(operations)
           operations = compine(operations)
           for (let i = 0; i < operations.length; i++) {
@@ -304,7 +308,7 @@ PanelWindow {
             }
           }
           if(operations.length > 1){
-            operations = [operations.join('').replaceAll(',',"")]
+            operations = [operations.join('').replace(/,/g,"")]
             return evaluateExpression(operations) 
         }else{
           return operations;
