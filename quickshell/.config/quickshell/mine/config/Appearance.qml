@@ -14,6 +14,8 @@ Singleton {
     readonly property color onAccentContainer: Colors.onAccentContainer
     readonly property color outlineVariant: Colors.outlineVariant
 
+    readonly property color islandColor: Qt.rgba(surface.r, surface.g, surface.b, surfaceOpacity)
+
     readonly property string fontFamily: "FiraCode Nerd Font"
 
     readonly property int barHeight: 38

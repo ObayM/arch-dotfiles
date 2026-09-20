@@ -27,6 +27,7 @@ Variants {
 
         property Item inner: null
         property real hPadding: 14
+        property real bottomRadius: Appearance.pillRadius
         readonly property alias hovered: hoverHandler.hovered
 
         implicitWidth: (island.inner ? island.inner.implicitWidth : 0) + hPadding * 2
@@ -40,10 +41,25 @@ Variants {
 
         Rectangle {
             anchors.fill: parent
-            radius: Appearance.pillRadius
-            color: Qt.rgba(Appearance.surface.r, Appearance.surface.g, Appearance.surface.b, Appearance.surfaceOpacity)
+            topLeftRadius: Appearance.pillRadius
+            topRightRadius: Appearance.pillRadius
+            bottomLeftRadius: island.bottomRadius
+            bottomRightRadius: island.bottomRadius
+            color: Appearance.islandColor
             border.width: 1
             border.color: Appearance.hairline
+
+            Behavior on bottomLeftRadius {
+                NumberAnimation {
+                    duration: Appearance.animFast
+                }
+            }
+
+            Behavior on bottomRightRadius {
+                NumberAnimation {
+                    duration: Appearance.animFast
+                }
+            }
 
             layer.enabled: true
             layer.effect: MultiEffect {
@@ -58,9 +74,12 @@ Variants {
 
         Rectangle {
             anchors.fill: parent
-            radius: Appearance.pillRadius
+            topLeftRadius: Appearance.pillRadius
+            topRightRadius: Appearance.pillRadius
+            bottomLeftRadius: island.bottomRadius
+            bottomRightRadius: island.bottomRadius
             color: Appearance.fg
-            opacity: island.hovered ? 0.04 : 0
+            opacity: island.hovered || (island === centerIsland && CommandCenterState.visible) ? 0.04 : 0
 
             Behavior on opacity {
                 NumberAnimation {
@@ -371,11 +390,17 @@ Variants {
             Island {
                 id: centerIsland
 
+                readonly property bool expandedState: hovered || CommandCenterState.visible
+
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
                 inner: clockRow
-                
+
+                bottomRadius: CommandCenterState.visible ? 0 : Appearance.pillRadius
+
+                onWidthChanged: CommandCenterState.pillWidth = width
                 onHoveredChanged: CommandCenterState.barHovered = hovered
+                Component.onCompleted: CommandCenterState.pillWidth = width
 
                 MouseArea {
                     anchors.fill: parent
@@ -398,7 +423,7 @@ Variants {
 
                     Item {
                         clip: true
-                        Layout.preferredWidth: centerIsland.hovered ? expanded.implicitWidth + 8 : 0
+                        Layout.preferredWidth: centerIsland.expandedState ? expanded.implicitWidth + 8 : 0
                         Layout.preferredHeight: expanded.implicitHeight
 
                         Behavior on Layout.preferredWidth {
@@ -412,7 +437,7 @@ Variants {
                             id: expanded
                             anchors.right: parent.right
                             spacing: 8
-                            opacity: centerIsland.hovered ? 1 : 0
+                            opacity: centerIsland.expandedState ? 1 : 0
 
                             Behavior on opacity {
                                 NumberAnimation {

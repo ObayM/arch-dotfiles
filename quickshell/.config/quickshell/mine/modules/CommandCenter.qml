@@ -6,48 +6,163 @@ import Quickshell.Wayland
 import qs.modules.services
 import qs.config
 
+import QtQuick.Shapes
+
 PanelWindow {
     id: root
 
     screen: Quickshell.screens[0]
     color: 'transparent'
-    visible: CommandCenterState.visible
+    visible: mapped
 
     WlrLayershell.namespace: "quickshell:commandcenter"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    exclusiveZone: 0
+    exclusionMode: ExclusionMode.Ignore
+
+    property bool mapped: false
+    property bool shown: false
+
+    Connections {
+        target: CommandCenterState
+        function onVisibleChanged() {
+            if (CommandCenterState.visible) {
+                hideTimer.stop();
+                root.mapped = true;
+                showTimer.restart();
+            } else {
+                root.shown = false;
+                hideTimer.restart();
+            }
+        }
+    }
+
+    Timer {
+        id: showTimer
+        interval: 16
+        onTriggered: root.shown = true
+    }
+
+    Timer {
+        id: hideTimer
+        interval: Appearance.animMed
+        onTriggered: root.mapped = false
+    }
 
     anchors {
         top: true
     }
 
     margins {
-        top: Appearance.margin
+        top: 0
     }
 
-    implicitHeight: 300
+    readonly property real islandBottom: Appearance.margin + (Appearance.barHeight + Appearance.islandHeight) / 2
+
+    implicitHeight: islandBottom + 300
     implicitWidth: 360
+
+    mask: Region {
+        item: card
+    }
 
     HoverHandler {
         onHoveredChanged: CommandCenterState.panelHovered = hovered
     }
 
-    Rectangle {
+    Item {
+        id: content
+
         anchors.fill: parent
+        transformOrigin: Item.Top
 
-        radius: Appearance.radius * 1.67 // nothing special about the number here, it's just perfect :)
+        opacity: root.shown ? 1 : 0
+        scale: root.shown ? 1 : 0.97
 
-        color: Qt.rgba(Appearance.bg.r, Appearance.bg.g, Appearance.bg.b, 0.94)
-        border.width: 1
-        border.color: Appearance.hairline
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Appearance.animFast
+            }
+        }
 
-        Text {
-            anchors.centerIn: parent
-            text: "command center"
-            color: Appearance.fg
-            font.family: Appearance.fontFamily
-            font.pixelSize: 14
+        Behavior on scale {
+            NumberAnimation {
+                duration: Appearance.animMed
+                easing.type: Appearance.easeOutCubic
+            }
+        }
+
+        Rectangle {
+            id: card
+            y: root.islandBottom
+
+            width: parent.width
+            height: 300
+
+            radius: Appearance.radius * 1.67
+
+            color: Appearance.islandColor
+            border.width: 1
+            border.color: Appearance.hairline
+
+            Text {
+                anchors.centerIn: parent
+                text: "command center"
+                color: Appearance.fg
+                font.family: Appearance.fontFamily
+                font.pixelSize: 14
+            }
+        }
+
+        InvertedCorner {
+            size: 14
+            fill: card.color
+            y: root.islandBottom - size
+            x: card.width / 2 - CommandCenterState.pillWidth / 2 - size
+        }
+
+        InvertedCorner {
+            size: 14
+            mirror: true
+            fill: card.color
+            y: root.islandBottom - size
+            x: card.width / 2 + CommandCenterState.pillWidth / 2
         }
     }
+
+    component InvertedCorner: Shape {
+        id: corner
+
+        property real size: 14
+        property color fill: "white"
+        property bool mirror: false
+
+        width: size
+        height: size
+        preferredRendererType: Shape.CurveRenderer
+
+        transform: Scale {
+            xScale: corner.mirror ? -1 : 1
+            origin.x: corner.size / 2
+        }
+        
+        ShapePath {
+            fillColor: corner.fill
+            strokeWidth: 0
+
+            startX: corner.size
+            startY: 0
+
+            PathLine { x: corner.size; y: corner.size }
+            PathLine { x: 0; y: corner.size }
+            PathArc {
+                x: corner.size
+                y: 0
+                radiusX: corner.size
+                radiusY: corner.size
+                direction: PathArc.Counterclockwise
+            }
+        }
+    }
+
 }

@@ -9,6 +9,8 @@ Singleton {
     property bool panelHovered: false
     property bool pinned: false
 
+    property real pillWidth: 0
+
     readonly property bool wanted: barHovered || panelHovered || pinned
 
     property bool visible: false
