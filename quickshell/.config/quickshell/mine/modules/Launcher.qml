@@ -40,7 +40,8 @@ PanelWindow {
 
         if (!launcher.query.length)
             return launcher.apps;
-
+        
+        console.log(launcher.query)
         return launcher.apps.map(e => ({
                     entry: e,
                     s: launcher.matchScore(e.name, launcher.query)
@@ -110,7 +111,205 @@ PanelWindow {
         launcher.open = true;
         Qt.callLater(() => searchField.forceActiveFocus());
     }
+      
+    function findInnermostBracket (arr,indexofthis){
+        // find the smallest brac and return the calcation and the index of it  
+    if(arr.includes('(')){
+        return findInnermostBracket(arr.slice(arr.indexOf('(') + 1 ,arr.length),indexofthis + arr.indexOf('(') + 1)
+    }
+    else{
+        if(arr.includes(')')) {
+        return {data: arr.slice(0, arr.indexOf(')')), index:indexofthis}}
+        return  {data: arr, index:indexofthis}
+    }
+    }
 
+
+    function pre(oper,index) {
+            let operation = oper[index];
+            let {before, after,prev , nextopindex} = findbeforeafter(oper,operation,index);
+            let indexofeqa= (prev === -1 ? 0 : prev)
+            let endofeqa = (nextopindex - indexofeqa - 1)
+            return {replace: performOperation(operation, before, after).toString(),start:indexofeqa,end:endofeqa};
+            }
+
+    function performOperation(operation, firstnum, secondnum) {
+    let result = 0;
+    
+    switch (operation) {
+        case "+":
+        result = +firstnum + +secondnum;
+        break;
+        case "-":
+        result = +firstnum - +secondnum;
+        break;
+        case "×":
+        result = +firstnum * +secondnum;
+        break;
+        case "÷":
+        result = +firstnum / +secondnum;
+        break;
+    }
+    if(result.toString().length >= 17){
+        form.innerHTML = "Too Big"
+        hold.innerHTML = ''
+        setTimeout(()=> {
+        form.innerHTML = ''
+        },2000)
+    
+    }
+    return result;
+    }
+
+    function findNextOperator(arr, operation, indexarr) {
+    for (let i = indexarr; i < arr.length; i++) {
+        if (isNaN(+arr[i]) && i !== indexarr) {
+            return i;  // Return index of the next operator
+        }
+    }
+    return arr.length;
+    } 
+
+    function findPreviousOperator(arr, operation, indexarr) {
+        for (let i = indexarr; i >= 0; i--) {
+        if (isNaN(+arr[i]) && i !== indexarr) {
+            return i;  // Return index of the first number of the equation
+        }else if(indexarr == 0){
+            return 'isolatiedop';
+        }
+    }
+        return -1;
+    }
+
+    function findbeforeafter(operations, operation, index) {
+    let prevopin = findPreviousOperator(operations, operation, index);
+    let nextopindex = findNextOperator(operations, operation, index);
+    let gropednum;
+    let secondnum;
+    if (nextopindex  == operations.length) {
+            secondnum = operations.slice(index + 1).join('').replaceAll(",", "");
+    } else {
+        if(prevopin == 'isolatiedop'){
+                gropednum = operations.slice(0, nextopindex).join().replaceAll(",", "");
+                operations[0] = gropednum
+                operations.splice(1, nextopindex - 1)
+                prevopin = prevopin   
+    }
+        secondnum = operations.slice(index + 1, nextopindex).join('').replaceAll(",", "");}
+        gropednum = operations.slice(prevopin + 1, index).join().replaceAll(",", "");
+    return { before: gropednum, after: secondnum , prev: (prevopin + 1) ,nextopindex: nextopindex  }; 
+    }
+
+    function checkForDuplicate(operations){
+    let newop = []
+    for(let i =0; i < operations.length;i++){
+        if(operations[i] === operations[i + 1] && isNaN(+operations[i]) && !('()'.includes(operations[i]))){
+        if(!'+-'.includes(newop[newop.length - 1])){
+            newop.push(operations[i] == '-' ? "+": '+')
+        }
+        i++
+        }else {
+
+        if((operations[i] == newop[newop.length - 1]  && isNaN(+operations[i]))){
+            
+        }else{
+            newop.push(operations[i])
+        }
+        }
+    }
+    return newop
+    }
+
+    function compine(operations){
+    let newop = []
+    for(let i =0; i < operations.length;i++){
+        if('-+'.includes(operations[i - 1]) && '×÷+-'.includes(operations[i - 2])){
+        newop[i - 1] = operations[i - 1] + operations[i]
+        i++
+        }else{
+        newop.push(operations[i])
+        }
+    }
+    return newop
+    }
+
+    function evaluateExpression(operations) {
+          operations = operations[0].replaceAll(" ", "").replaceAll('−',"-").replaceAll('*','×').replaceAll('/','÷').split('');
+          operations = checkForDuplicate(operations)
+          operations = compine(operations)
+          for (let i = 0; i < operations.length; i++) {
+            let indexofeqa = 0;
+            let endofeqa = 0;
+            let replacement = "";
+            let divideexis = operations.join('').includes("÷");
+            let multiexis = operations.join('').includes("×");
+            let havebrac = operations.join('').includes("(")
+            if (operations[i] == "(") {
+              const remainingArray = operations.slice(i + 1, operations.length);
+              let endofbrac;
+              remainingArray.pop()
+              let {data,index} = findInnermostBracket(remainingArray,i)
+              let length = data.length + 1
+              data = [data.join('')]
+              let result = evaluateExpression(data)
+              if (result != []) {
+                operations[index] = result[0];
+                operations.splice(index + 1 , length )
+                result = "";
+                i = 0;
+              }
+              
+        } else if ((divideexis || multiexis) && !havebrac) {
+            let indexoffirstdivide = operations.indexOf("÷");
+            let indexoffirstmulti = operations.indexOf("×");
+            if (divideexis && multiexis) {
+              if (indexoffirstdivide < indexoffirstmulti) {
+                let data = pre(operations,indexoffirstdivide)
+                indexofeqa = data.start 
+                endofeqa = data.end
+                replacement = data.replace
+              }else{
+                let data = pre(operations,indexoffirstmulti)
+                indexofeqa = data.start 
+                endofeqa = data.end 
+                replacement = data.replace
+              }
+            }
+            else if(divideexis && !multiexis){
+              let data = pre(operations,indexoffirstdivide)
+              indexofeqa = data.start 
+              endofeqa = data.end 
+              replacement = data.replace  
+            }
+            else{
+              let data = pre(operations,indexoffirstmulti)
+              indexofeqa = data.start
+              endofeqa = data.end ;
+              replacement = data.replace
+            }
+            } 
+          else if (isNaN(+operations[i]) && "+−-".includes(operations[i]) && !havebrac ) {
+              let data = pre(operations,i)
+              indexofeqa = data.start
+              endofeqa = data.end;
+              replacement = data.replace
+            }
+            if (replacement !== '') {
+              operations[indexofeqa] = replacement;
+              operations.splice(indexofeqa + 1, endofeqa);
+              replacement = "";
+              indexofeqa = 0;
+              endofeqa = 0;
+              i = 0;
+            }
+          }
+          if(operations.length > 1){
+            operations = [operations.join('').replaceAll(',',"")]
+            return evaluateExpression(operations) 
+        }else{
+          return operations;
+        }
+      }
 
     function launch(entry) {
         if (!entry)
