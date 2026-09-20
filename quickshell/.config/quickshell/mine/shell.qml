@@ -63,4 +63,5 @@ ShellRoot {
         }
     }
     Launcher {}
+    Notifications {}
 }

@@ -11,6 +11,9 @@ import Quickshell.Widgets
 import Quickshell.Services.SystemTray
 import Quickshell.Services.UPower
 import Quickshell.Services.Pipewire
+
+import Quickshell.Services.Notifications
+import qs.modules.services
 import qs.config
 
 Variants {
@@ -679,6 +682,12 @@ Variants {
                             }
                         }
                     }
+
+                    Text {
+                        text: "" + NotificationsService.list.values.length
+                        visible: NotificationsService.list.values.length > 0
+                    }
+
                 }
             }
         }
