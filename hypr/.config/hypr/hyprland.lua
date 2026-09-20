@@ -75,6 +75,7 @@ end
 for i = 1, 9 do
     hl.bind(string.format("%s + %d", mod, i), hl.dsp.focus({ workspace = i }))
     hl.bind(string.format("%s + SHIFT + %d", mod, i), hl.dsp.window.move({ workspace = i }))
+    hl.bind(string.format("%s + ALT + %d", mod, i), hl.dsp.window.move({ workspace = i, follow = false }))
 end
 
 hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
