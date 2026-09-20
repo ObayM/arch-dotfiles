@@ -64,4 +64,5 @@ ShellRoot {
     }
     Launcher {}
     Notifications {}
+    Osd {}
 }

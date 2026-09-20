@@ -85,8 +85,8 @@ for key, command in pairs({
     XF86AudioRaiseVolume = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+",
     XF86AudioLowerVolume = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-",
     XF86AudioMute = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-    XF86MonBrightnessUp = "brightnessctl set 5%+",
-    XF86MonBrightnessDown = "brightnessctl set 5%-",
+    XF86MonBrightnessUp = "brightnessctl set 5%+ && qs -c mine ipc call brightness refresh",
+    XF86MonBrightnessDown = "brightnessctl set 5%- && qs -c mine ipc call brightness refresh",
 }) do
     hl.bind(key, hl.dsp.exec_cmd(command), { repeating = true, locked = true })
 end
