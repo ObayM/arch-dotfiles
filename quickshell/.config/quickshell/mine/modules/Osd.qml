@@ -11,6 +11,7 @@ import Quickshell.Io
 
 import qs.modules.services
 import qs.config
+import qs.modules.common
 
 PanelWindow {
     id: root
@@ -39,7 +40,7 @@ PanelWindow {
 
     readonly property real value: root.kind === "volume" ? (Pipewire.defaultAudioSink?.audio.volume ?? 0) : Brightness.value
     readonly property bool muted: root.kind === "volume" && (Pipewire.defaultAudioSink?.audio.muted ?? false)
-    readonly property string icon: root.kind === "volume" ? (root.muted ? "" : root.value > 0.5 ? "" : root.value > 0 ? "" : "") : "󰃟"
+    readonly property string icon: root.kind === "volume" ? (root.muted ? "volume_off" : root.value > 0.5 ? "volume_up" : root.value > 0 ? "volume_down" : "volume_off") : "brightness_6"  
     readonly property string label: root.kind === "volume" ? "Volume" : "Brightness"
 
     function reveal(newKind) {
@@ -137,12 +138,11 @@ PanelWindow {
                 radius: Appearance.pillRadius
                 color: Appearance.surfaceHigh
 
-                Text {
+                MaterialSymbol {
                     anchors.centerIn: parent
-                    text: root.icon
+                    icon: root.icon
+                    iconSize: 18
                     color: Appearance.fg
-                    font.pixelSize: 16
-                    font.family: Appearance.fontFamily
                 }
             }
 

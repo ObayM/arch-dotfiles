@@ -15,6 +15,7 @@ import Quickshell.Services.Pipewire
 import Quickshell.Services.Notifications
 import qs.modules.services
 import qs.config
+import qs.modules.common 
 
 Variants {
     id: root
@@ -420,14 +421,14 @@ Variants {
                     anchors.centerIn: parent
                     spacing: 14
 
-                    Text {
+                    MaterialSymbol {
                         id: networkIcon
                         Layout.alignment: Qt.AlignVCenter
-                        text: bar.netConnType === "ethernet" ? "" : ""
+                        icon: bar.netConnType === "ethernet" ? "lan" : "wifi"
                         color: Appearance.fg
                         opacity: bar.netConnType === "none" ? 0.3 : (bar.netConnType === "wifi" ? Math.max(0.35, bar.netSignal / 100) : 0.85)
-                        font.family: Appearance.fontFamily
-                        font.pixelSize: 13
+                        iconSize: 15
+                    
 
                         MouseArea {
                             anchors.fill: parent
@@ -457,12 +458,11 @@ Variants {
                             anchors.centerIn: parent
                             spacing: 6
 
-                            Text {
-                                text: volumeWidget.muted ? "" : volumeWidget.vol > 50 ? "" : volumeWidget.vol > 0 ? "" : ""
+                            MaterialSymbol {
+                                icon: volumeWidget.muted ? "volume_off" : volumeWidget.vol > 50 ? "volume_up" : volumeWidget.vol > 0 ? "volume_down" : "volume_off"
                                 color: Appearance.fg
                                 opacity: volumeWidget.muted ? 0.4 : 0.85
-                                font.family: Appearance.fontFamily
-                                font.pixelSize: 14
+                                iconSize: 15
                             }
 
                             Text {
@@ -525,12 +525,11 @@ Variants {
                             anchors.centerIn: parent
                             spacing: 6
 
-                            Text {
-                                text: batteryWidget.charging ? "" : batteryWidget.pct >= 90 ? "" : batteryWidget.pct >= 60 ? "" : batteryWidget.pct >= 35 ? "" : batteryWidget.pct >= 15 ? "" : ""
+                            MaterialSymbol {
+                                icon: batteryWidget.charging ? "battery_charging_full" : batteryWidget.pct >= 90 ? "battery_full" : batteryWidget.pct >= 60 ? "battery_5_bar" : batteryWidget.pct >= 35 ? "battery_3_bar" : batteryWidget.pct >= 15 ? "battery_2_bar" : "battery_alert"
                                 color: Appearance.fg
                                 opacity: batteryWidget.charging ? 1 : 0.85
-                                font.family: Appearance.fontFamily
-                                font.pixelSize: 14
+                                iconSize: 15
                             }
 
                             Text {
