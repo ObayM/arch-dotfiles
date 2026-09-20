@@ -45,6 +45,19 @@ PanelWindow {
         opened = false
     }
 
+    Process {
+        id: copyProcess
+
+        command: ["wl-copy" , "     "]
+        running: false
+    }
+    Process {
+        id: typeClipboardSelectionProcess
+
+        command: ["wtype", "-M", "ctrl" ,"-k" ,"v" , "     "]
+        running: false
+        
+    }
     Rectangle {
         anchors.fill: parent
         ListView {
@@ -65,10 +78,12 @@ PanelWindow {
                     wrapMode: Text.Wrap
                 }
                 MouseArea {
+                    anchors.fill: parent
                     onClicked: function (){
-                        console.log(modelData.text)
-                        console.log('asdfsadf')
-
+                        copyProcess.command = ['wl-copy', modelData.text]
+                        typeClipboardSelectionProcess.command = ["wtype", "-M", "ctrl" ,"-k" ,"v", modelData.text]
+                        copyProcess.running = true
+                        typeClipboardSelectionProcess.running = true
                     }
                 }
             }
