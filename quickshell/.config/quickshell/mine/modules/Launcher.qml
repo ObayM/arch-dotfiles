@@ -26,6 +26,7 @@ PanelWindow {
     readonly property string clipPrefix: ";"
     readonly property bool clipMode: launcher.query.startsWith(launcher.clipPrefix)
 
+    property var calcResult;
     property var results: {
         if (launcher.clipMode) {
             const q = launcher.query.slice(launcher.clipPrefix.length).trim();
@@ -41,8 +42,10 @@ PanelWindow {
         if (!launcher.query.length)
             return launcher.apps;
         if (hasMultipleDigits(launcher.query)){
-            var calcation = evaluateExpression([String(launcher.query)])
-            console.log(calcation)
+            var r = evaluateExpression([String(launcher.query)])
+            launcher.calcResult = r
+        }else{
+            launcher.calcResult = null
         }
         return launcher.apps.map(e => ({
                     entry: e,
@@ -86,6 +89,11 @@ PanelWindow {
     }
 
     function activate(item) {
+        if(launcher.calcResult){
+            query = String(launcher.calcResult)
+            searchField.text = String(launcher.calcResult)
+            return
+        }
         if (!item)
             return;
 
@@ -505,6 +513,31 @@ PanelWindow {
                         Keys.onDownPressed: launcher.selected = Math.min(launcher.results.length - 1, launcher.selected + 1)
                         Keys.onReturnPressed: launcher.activate(launcher.results[launcher.selected])
                         Keys.onEnterPressed: launcher.activate(launcher.results[launcher.selected])
+                    }
+                }
+                Rectangle {
+                    id:resultBox
+                    visible: launcher.calcResult ? true : false
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.preferredHeight: 26
+                    Layout.preferredWidth: Math.min(200, resultText.implicitWidth + 20)
+                    radius: Appearance.pillRadius
+                    color: Appearance.accentContainer
+
+                    Text {
+                        id: resultText
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        text: String(launcher.calcResult)
+                        color: Appearance.fg
+                        opacity: 0.85
+                        font.family: Appearance.fontFamily
+                        font.pixelSize: 13
+                        font.weight: Font.DemiBold
+                        elide: Text.ElideRight
                     }
                 }
             }
