@@ -52,10 +52,18 @@ PanelWindow {
             picker.open = false;
         }
 
-        function apply(path) {
+        function apply(path, item) {
             if (!path || !path.length)
                 return;
-            Wallpapers.set(String(path));
+
+            if (item) {
+                const p = item.mapToItem(null, item.width / 2, item.height / 2);
+                
+                Wallpapers.setAt(String(path), Qt.point(picker.targetScreen.x + p.x, picker.targetScreen.y + p.y));
+            } else {
+                Wallpapers.set(String(path));
+            }
+
             picker.close();
         }
 
@@ -183,7 +191,7 @@ PanelWindow {
                 }
 
                 function activate() {
-                    picker.apply(folder.get(grid.currentIndex, "filePath"));
+                    picker.apply(folder.get(grid.currentIndex, "filePath"), grid.currentItem);
                 }
 
                 delegate: Item {
@@ -305,7 +313,7 @@ PanelWindow {
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: picker.apply(cell.filePath)
+                        onClicked: picker.apply(cell.filePath, tile)
                     }
                 }
             }

@@ -20,6 +20,18 @@ Variants {
         property real progress: 0
         property vector2d origin: Qt.vector2d(0.5, 0.5)
 
+    
+        function resolveOrigin() {
+            const s = win.screen;
+            if (!s || s.width <= 0 || s.height <= 0)
+                return Qt.vector2d(0.5, 0.5);
+
+            const g = Wallpapers.originGlobal;
+            const nx = (g.x - s.x) / s.width;
+            const ny = (g.y - s.y) / s.height;
+
+            return Qt.vector2d(Math.max(-0.5, Math.min(1.5, nx)), Math.max(-0.5, Math.min(1.5, ny)));
+        }
         screen: win.modelData
         color: "black"
 
@@ -106,7 +118,7 @@ Variants {
 
             fragmentShader: Qt.resolvedUrl("../shaders/ripple.frag.qsb")
         }
-
+        
         NumberAnimation {
             id: transition
 
@@ -117,7 +129,7 @@ Variants {
             duration: 1100
             easing.type: Easing.Linear
 
-            onStarted: win.origin = Qt.vector2d(Math.random(), Math.random())
+            onStarted: win.origin = win.resolveOrigin()
             onFinished: {
                 win.swapping = true;
                 win.shown = win.target;
