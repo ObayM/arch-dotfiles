@@ -12,18 +12,22 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
 hl.config({
     general = {
         gaps_in = 6,
-        gaps_out = 14,
+        gaps_out = 8,
         border_size = 1,
         layout = "dwindle",
         col = {
-            active_border = "#89b4fa",
-            inactive_border = "#313244",
+            active_border = "rgba(89b4fa55)",
+            inactive_border = "rgba(31324400)",
         },
     },
+
     decoration = {
-        rounding = 16,
+        rounding = 8,
+        rounding_power = 2.5,
         blur = { enabled = true, size = 8, passes = 3, ignore_opacity = true },
-        shadow = { enabled = true, range = 20, render_power = 3, color = "rgba(00000055)" },
+        shadow = { enabled = true, range = 20, render_power = 10, offset = { 0, 2 }, color = "rgba(00000020)" },
+        dim_inactive = true,
+        dim_strength = 0.1
     },
 
     input = {

@@ -18,7 +18,7 @@ Singleton {
 
     readonly property int barHeight: 38
     readonly property int islandHeight: 30
-    readonly property int margin: 10
+    readonly property int margin: 4
     readonly property int radius: 8
     readonly property int pillRadius: 10
 
