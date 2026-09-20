@@ -49,9 +49,21 @@ Singleton {
 
     FileView {
         id: file
+
         path: Quickshell.env("HOME") + "/.local/state/matugen/colors.json"
         watchChanges: true
-        onFileChanged: reload()
-        onLoadedChanged: root.apply(text())
+
+        onFileChanged: {
+            reload();
+            rereadTimer.restart();
+        }
+
+        onLoadedChanged: root.apply(file.text())
+    }
+
+    Timer {
+        id: rereadTimer
+        interval: 60
+        onTriggered: root.apply(file.text())
     }
 }

@@ -7,44 +7,57 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string stateLink: Quickshell.env("HOME") + "/.local/state/hypr/wallpaper"
+    readonly property string stateDir: Quickshell.env("HOME") + "/.local/state/hypr"
     readonly property string applyScript: Quickshell.env("HOME") + "/.config/hypr/scripts/apply-wallpaper.sh"
 
     property string current: ""
 
-    function refresh() {
-        readLinkProcess.running = true;
-    }
-
-    function set(path) {
-        
+    function set(path: string): void {
         if (!path.length || path === root.current)
             return;
-        
+
         applyProcess.command = ["bash", root.applyScript, path];
         applyProcess.running = true;
     }
 
-    Process {
-        id: readLinkProcess
-
-        command: ["readlink", "-f", root.stateLink]
-
-        stdout: StdioCollector {
-            onStreamFinished: root.current = this.text.trim()
-        }
+    function random(dir: string): void {
+        applyProcess.command = ["bash", root.applyScript, "--random", dir];
+        applyProcess.running = true;
     }
 
-     Process {
+    function apply(value: string): void {
+        const path = String(value).trim();
+        if(path.length)
+            root.current = path;
+    }
+    
+    FileView {
+        id: pathFile
+
+        path: root.stateDir + "/wallpaper.path"
+        watchChanges: true
+
+        onFileChanged: {
+            reload();
+            rereadTimer.restart();
+        }
+
+        onLoadedChanged: root.apply(pathFile.text())
+    }
+
+    Timer {
+        id: rereadTimer
+        interval: 60
+        onTriggered: root.apply(pathFile.text())
+    }
+    
+
+    Process {
         id: applyProcess
 
         onExited: code => {
-            if (code === 0)
-                root.refresh();
-            else
+            if (code !== 0)
                 console.warn("Wallpapers: apply script failed with code", code);
         }
     }
-
-    Component.onCompleted: root.refresh()
 }

@@ -62,7 +62,9 @@ stripped="${name%-dark}"; stripped="${stripped%-light}"
 if command -v identify >/dev/null && command -v hyprctl >/dev/null && command -v jq >/dev/null; then
     want_w="$(hyprctl monitors -j | jq '[.[].width] | max')"
 
-    read -r img_w img_h < <(identify -format '%w %h' "${src}[0]" 2>/dev/null || echo "0 0")
+    dims="$(identify -format '%w %h' "${src}[0]" 2>/dev/null || echo '0 0')"
+    img_w="${dims%% *}"
+    img_h="${dims##* }"
 
     (( img_w > 0 && img_w < want_w )) && \
         warn "Image is ${img_w}×${img_h}, narrower than your ${want_w}px monitor it will be upscaled"
@@ -74,8 +76,8 @@ matugen --prefer "$PREFER" --mode "$MODE" --type "$SCHEME" image "$src" \
 
 mkdir -p "$STATE_DIR"
 ln -sfn "$src" "$STATE_DIR/wallpaper"
-printf '%s\n' "$src" > "$STATE_DIR/wallpaper.path.tmp"
-mv -f "$STATE_DIR/wallpaper.path.tmp" "$STATE_DIR/wallpaper.path"
+
+printf '%s\n' "$src" > "$STATE_DIR/wallpaper.path"
 
 if command -v hyprctl >/dev/null && pgrep -x hyprpaper >/dev/null; then
     hyprctl hyprpaper reload ",$src" >/dev/null 2>&1 || true
