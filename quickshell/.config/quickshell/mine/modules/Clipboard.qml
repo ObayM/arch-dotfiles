@@ -27,7 +27,8 @@ PanelWindow {
                     var parts = line.split("\t")
                     return {
                         id: parts[0],
-                        text: parts[1]
+                        text: parts[1],
+                        whole: line
                     }
                 })
             }
@@ -58,21 +59,38 @@ PanelWindow {
         running: false
         
     }
+    Process {
+        id:decoderProcess
+        running:false
+        stdout: StdioCollector {
+            onStreamFinished:{
+
+                console.log('ture')
+                console.log(text)
+                copyProcess.command = ['wl-copy', text]
+                typeClipboardSelectionProcess.command = ["wtype", "-M", "ctrl" ,"v", "-m", 'ctrl']
+                copyProcess.running = true
+                typeClipboardSelectionProcess.running = true
+            }
+        }
+    }
     Rectangle {
         anchors.fill: parent
         ListView {
             anchors.fill: parent
-            anchors.margins: 20
+            anchors.margins: 15
             model: root.clipboardItems
             spacing:8
             delegate: Rectangle {
                 required property var modelData
                 width: ListView.view.width
                 height:50
-                radius:8
+                radius:3
                 color: 'red'
                 Text {
                     anchors.fill: parent
+                    verticalAlignment: Text.verticalAlignment
+                    horizontalAlignment: Text.horizontalAlignment
                     text: modelData.text
                     color: 'black'
                     wrapMode: Text.Wrap
@@ -80,10 +98,9 @@ PanelWindow {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: function (){
-                        copyProcess.command = ['wl-copy', modelData.text]
-                        typeClipboardSelectionProcess.command = ["wtype", "-M", "ctrl" ,"-k" ,"v", modelData.text]
-                        copyProcess.running = true
-                        typeClipboardSelectionProcess.running = true
+                        decoderProcess.command = ["cliphist", "decode", String(modelData.id)]
+                        decoderProcess.running = true
+
                     }
                 }
             }
