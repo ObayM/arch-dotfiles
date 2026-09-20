@@ -67,6 +67,10 @@ hl.bind(mod .. " + V", hl.dsp.window.float())
 hl.bind(mod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mod .. " + M", hl.dsp.exit())
 
+hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs -c mine ipc call wallpaper toggle"))
+hl.bind(mod .. " + SHIFT + W", hl.dsp.exec_cmd("qs -c mine ipc call wallpaper random"))
+
+
 for key, direction in pairs({ left = "l", right = "r", up = "u", down = "d" }) do
     hl.bind(mod .. " + " .. key, hl.dsp.focus({ direction = direction }))
 end

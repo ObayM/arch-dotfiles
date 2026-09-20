@@ -70,4 +70,24 @@ ShellRoot {
     CommandCenter {}
 
     Wallpaper {}
+
+    WallpaperPicker {
+        id: wallpaperPicker
+    }
+
+    IpcHandler {
+        target: 'wallpaper'
+
+        function toggle(): void {
+            if (wallpaperPicker.open)
+                wallpaperPicker.close();
+
+            else
+                wallpaperPicker.show();
+        }
+
+        function random(): void {
+            Wallpapers.random(Wallpapers.dir)
+        }
+    }
 }

@@ -9,6 +9,7 @@ Singleton {
 
     readonly property string stateDir: Quickshell.env("HOME") + "/.local/state/hypr"
     readonly property string applyScript: Quickshell.env("HOME") + "/.config/hypr/scripts/apply-wallpaper.sh"
+    readonly property string dir: Quickshell.env("HOME") + "/Pictures/wallpapers"
 
     property string current: ""
 
