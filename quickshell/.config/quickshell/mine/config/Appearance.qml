@@ -8,11 +8,29 @@ Singleton {
     readonly property color surface: Colors.surface
     readonly property color surfaceLow: Colors.surfaceLow
     readonly property color surfaceHigh: Colors.surfaceHigh
+    readonly property color surfaceHighest: Colors.surfaceHighest
     readonly property color fg: Colors.fg
+    readonly property color subtext: Colors.subtext
+    readonly property color outline: Colors.outline
     readonly property color accent: Colors.accent
     readonly property color accentContainer: Colors.accentContainer
     readonly property color onAccentContainer: Colors.onAccentContainer
+    readonly property color onAccent: Colors.onAccent
     readonly property color outlineVariant: Colors.outlineVariant
+
+    function alpha(c: color, a: real): color {
+        return Qt.rgba(c.r, c.g, c.b, a);
+    }
+
+    readonly property color cardColor: alpha(bg, 0.72)
+    readonly property color cardBorder: alpha(fg, 0.08)
+    readonly property color cardSheen: alpha(fg, 0.07)
+    readonly property color fieldColor: alpha(fg, 0.05)
+    readonly property color fieldBorderFocus: alpha(accent, 0.40)
+
+    readonly property color rowHover: alpha(accent, 0.07)
+    readonly property color rowSelected: alpha(accent, 0.15)
+    readonly property color rowIdle: alpha(accent, 0)
 
     readonly property color islandColor: Qt.rgba(surface.r, surface.g, surface.b, surfaceOpacity)
     readonly property color islandHover: Qt.rgba(surfaceHigh.r, surfaceHigh.g, surfaceHigh.b, Math.min(1, surfaceOpacity + 0.05))

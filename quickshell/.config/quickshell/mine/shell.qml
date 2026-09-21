@@ -68,6 +68,7 @@ ShellRoot {
 
     Notifications {}
     Osd {}
+    Screenshot {}
 
     CalendarWidget {}
     Wallpaper {}

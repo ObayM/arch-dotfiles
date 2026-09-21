@@ -76,21 +76,9 @@ PanelWindow {
             sortField: FolderListModel.Name
         } 
         
-        Rectangle {
-            anchors.fill: parent
-            color: Qt.rgba(0, 0, 0, 0.45)
-            opacity: picker.open ? 1 : 0
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Appearance.animFast
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: picker.close()
-        }
+    MouseArea {
+        anchors.fill: parent
+        onClicked: picker.close()
     }
 
     Rectangle {
@@ -100,10 +88,10 @@ PanelWindow {
         width: Math.min(1180, parent.width * 0.82)
         height: Math.min(760, parent.height * 0.78)
 
-        radius: Appearance.radius * 1.67
-        color: Appearance.islandColor
+        radius: Appearance.cardRadius
+        color: Appearance.cardColor
         border.width: 1
-        border.color: Appearance.hairline
+        border.color: Appearance.cardBorder
 
         focus: true
         opacity: picker.open ? 1 : 0
@@ -164,8 +152,7 @@ PanelWindow {
 
                 Text {
                     text: folder.count + (folder.count === 1 ? " image" : " images")
-                    color: Appearance.fg
-                    opacity: 0.45
+                    color: Appearance.subtext
                     font.family: Appearance.fontFamily
                     font.pixelSize: 12
                 }
@@ -277,7 +264,7 @@ PanelWindow {
                             radius: Appearance.radius
                             color: "transparent"
                             border.width: cell.applied || cell.selected ? 2 : 1
-                            border.color: cell.applied ? Appearance.accent : (cell.selected ? Appearance.onAccentContainer : Appearance.hairline)
+                            border.color: cell.applied ? Appearance.accent : (cell.selected ? Appearance.alpha(Appearance.accent, 0.6) : Appearance.cardBorder)
 
                             Behavior on border.color {
                                 ColorAnimation {

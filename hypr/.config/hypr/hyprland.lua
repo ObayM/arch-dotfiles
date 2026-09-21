@@ -70,6 +70,11 @@ hl.bind(mod .. " + M", hl.dsp.exit())
 hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs -c mine ipc call wallpaper toggle"))
 hl.bind(mod .. " + SHIFT + W", hl.dsp.exec_cmd("qs -c mine ipc call wallpaper random"))
 
+hl.bind(mod .. " + S", hl.dsp.exec_cmd("qs -c mine ipc call screenshot region"))
+hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd("qs -c mine ipc call screenshot edit"))
+hl.bind("PRINT", hl.dsp.exec_cmd("qs -c mine ipc call screenshot screen"))
+hl.bind("SHIFT + PRINT", hl.dsp.exec_cmd("qs -c mine ipc call screenshot region"))
+
 hl.layer_rule({ name = "blur-bar", match = { namespace = "quickshell:bar" }, blur = true, ignore_alpha = true, no_anim = true })
 
 for key, direction in pairs({ left = "l", right = "r", up = "u", down = "d" }) do
@@ -99,5 +104,7 @@ hl.window_rule({ match = { class = "^(pavucontrol)$" }, float = true })
 
 hl.layer_rule({ name = "blur-bar", match = { namespace = "quickshell:bar" }, blur = true, ignore_alpha = true })
 hl.layer_rule({ name = "blur-launcher", match = { namespace = "quickshell:launcher" }, blur = true, ignore_alpha = true })
+hl.layer_rule({ name = "blur-wallpaperpicker", match = { namespace = "quickshell:wallpaperpicker" }, blur = true, ignore_alpha = true })
+hl.layer_rule({ name = "noanim-screenshot", match = { namespace = "quickshell:screenshot" }, no_anim = true })
 
 pcall(dofile, os.getenv("HOME") .. "/.config/hypr/local.lua")

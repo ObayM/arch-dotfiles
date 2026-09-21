@@ -10,7 +10,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.config
 
-import qs.modules.common 
+import qs.modules.common
 import qs.modules.services
 
 PanelWindow {
@@ -22,7 +22,7 @@ PanelWindow {
     property bool open: false
     property string query: ""
     property int selected: 0
-    
+
     readonly property string clipPrefix: ";"
     readonly property string mathPrefix: "="
     readonly property bool clipMode: launcher.query.startsWith(launcher.clipPrefix)
@@ -77,7 +77,7 @@ PanelWindow {
             const q = launcher.query.slice(launcher.clipPrefix.length).trim();
             if (!q.length)
                 return Cliphist.entries;
-            
+
             return Cliphist.entries.map(e => ({
                         entry: e,
                         s: launcher.matchScore(Cliphist.clean(e), q)
@@ -92,7 +92,7 @@ PanelWindow {
                     s: launcher.matchScore(e.name, launcher.query)
                 })).filter(r => r.s >= 0).sort((a, b) => b.s - a.s).map(r => r.entry);
     }
-    
+
 
     property var apps: {
         const seen = new Set();
@@ -135,10 +135,10 @@ PanelWindow {
 
         if (launcher.clipMode)
             Cliphist.paste(item);
-        
+
         else
             item.execute();
-        
+
         launcher.open = false
     }
 
@@ -159,7 +159,7 @@ PanelWindow {
         launcher.open = true;
         Qt.callLater(() => searchField.forceActiveFocus());
     }
-      
+
 
 
     function launch(entry) {
@@ -237,14 +237,19 @@ PanelWindow {
         id: card
 
         width: 560
-        height: Math.max(rowHeight + 24, Math.min(rowHeight + 24 + resultsList.count * launcher.rowHeight, rowHeight + 24 + launcher.maxVisibleRows * launcher.rowHeight))
+        height: {
+            const chrome = launcher.rowHeight + 24;
+            if (resultsList.count === 0)
+                return launcher.query.length ? chrome + 52 : chrome;
+            return chrome + Math.min(resultsList.count, launcher.maxVisibleRows) * launcher.rowHeight;
+        }
         anchors.horizontalCenter: parent.horizontalCenter
         y: parent.height * 0.2
 
-        radius: Appearance.radius
-        color: Qt.rgba(Appearance.bg.r, Appearance.bg.g, Appearance.bg.b, 0.92)
+        radius: Appearance.cardRadius
+        color: Appearance.cardColor
         border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        border.color: Appearance.cardBorder
 
         opacity: launcher.open ? 1 : 0
         scale: launcher.open ? 1 : 0.97
@@ -282,10 +287,10 @@ PanelWindow {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.leftMargin: Appearance.radius
-            anchors.rightMargin: Appearance.radius
+            anchors.leftMargin: Appearance.cardRadius
+            anchors.rightMargin: Appearance.cardRadius
             height: 1
-            color: Qt.rgba(1, 1, 1, 0.1)
+            color: Appearance.cardSheen
         }
 
         MouseArea {
@@ -296,216 +301,234 @@ PanelWindow {
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 8
-            spacing: 4
-
-            RowLayout {
-                id: searchRow
-                Layout.fillWidth: true
-                Layout.fillHeight: false
-                Layout.preferredHeight: launcher.rowHeight
-                Layout.leftMargin: 8
-                Layout.rightMargin: 8
-                spacing: 10
-
-                MaterialSymbol {
-                    icon: launcher.clipMode ? "content_paste" : "search"
-                    color: Appearance.accent
-                    opacity: 0.9
-                    iconSize: 19
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-
-                    Text {
-                        text: launcher.clipMode ? "Search clipboard…" : "Search apps…"
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: Appearance.fg
-                        opacity: 0.35
-                        font.pixelSize: 17
-                        font.weight: Font.Medium
-                        font.family: Appearance.fontFamily
-                        visible: !searchField.text.length
-                    }
-
-                    TextInput {
-                        id: searchField
-                        anchors.fill: parent
-                        verticalAlignment: TextInput.AlignVCenter
-                        color: Appearance.fg
-                        font.pixelSize: 17
-                        font.weight: Font.Medium
-                        font.family: Appearance.fontFamily
-                        clip: true
-                        selectByMouse: true
-
-                        onTextChanged: {
-                            launcher.query = text;
-                            launcher.selected = 0;
-                        }
-
-                        Keys.onEscapePressed: launcher.open = false
-                        Keys.onUpPressed: launcher.selected = Math.max(0, launcher.selected - 1)
-
-                        Keys.onDownPressed: launcher.selected = Math.min(launcher.results.length - 1, launcher.selected + 1)
-                        Keys.onReturnPressed: launcher.activate(launcher.results[launcher.selected])
-                        Keys.onEnterPressed: launcher.activate(launcher.results[launcher.selected])
-                    }
-                }
-                Rectangle {
-                    id:resultBox
-                    visible: launcher.hasCalc
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredHeight: 26
-                    Layout.preferredWidth: Math.min(200, resultText.implicitWidth + 20)
-                    radius: Appearance.pillRadius
-                    color: Appearance.accentContainer
-
-                    Text {
-                        id: resultText
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        text: launcher.calcResult
-                        color: Appearance.fg
-                        opacity: 0.85
-                        font.family: Appearance.fontFamily
-                        font.pixelSize: 13
-                        font.weight: Font.DemiBold
-                        elide: Text.ElideRight
-                    }
-                }
-            }
+            spacing: 6
 
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.preferredHeight: 1
-                Layout.leftMargin: 8
-                Layout.rightMargin: 8
-                color: Appearance.hairline
-                visible: resultsList.count > 0
-            }
+                Layout.preferredHeight: launcher.rowHeight
+                Layout.leftMargin: 4
+                Layout.rightMargin: 4
+                radius: height / 2
+                color: Appearance.fieldColor
+                border.width: searchField.activeFocus ? 1 : 0
+                border.color: Appearance.fieldBorderFocus
 
-            ListView {
-                id: resultsList
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                model: launcher.results
-                currentIndex: launcher.selected
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: Appearance.animFast
+                    }
+                }
 
-                delegate: Item {
-                    id: row
+                RowLayout {
+                    id: searchRow
+                    anchors.fill: parent
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 8
+                    spacing: 10
 
-                    required property var modelData
-                    required property int index
-
-                    width: resultsList.width
-                    height: launcher.rowHeight
-
-                    readonly property bool isSelected: row.index === launcher.selected
-
-                    Rectangle {
-                        id: selectionChip
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-                        anchors.topMargin: 2
-                        anchors.bottomMargin: 2
-                        radius: Appearance.pillRadius
-                        color: row.isSelected ? Appearance.accentContainer : Appearance.fg
-                        opacity: row.isSelected ? 1 : (hover.hovered ? 0.06 : 0)
+                    MaterialSymbol {
+                        icon: launcher.clipMode ? "content_paste" : "search"
+                        color: launcher.query.length ? Appearance.accent : Appearance.outline
+                        iconSize: 19
 
                         Behavior on color {
                             ColorAnimation {
                                 duration: Appearance.animFast
                             }
                         }
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Appearance.animFast
-                            }
-                        }
-
-                        Rectangle {
-                            visible: row.isSelected
-                            anchors.top: parent.top
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.topMargin: 1
-                            anchors.leftMargin: selectionChip.height / 2
-                            anchors.rightMargin: selectionChip.height / 2
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.14)
-                        }
                     }
 
-                    HoverHandler {
-                        id: hover
-                        onHoveredChanged: if (hovered)
-                            launcher.selected = row.index
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 18
-                        anchors.rightMargin: 18
-                        spacing: 12
-
-                        IconImage {
-                            visible: !launcher.clipMode
-                            Layout.preferredWidth: 22
-                            Layout.preferredHeight: 22
-                            source: launcher.clipMode ? "" : Quickshell.iconPath(row.modelData.icon, "image-missing")
-                        }
-
-                        MaterialSymbol {
-                            visible: launcher.clipMode
-                            icon: "content_copy"
-                            iconSize: 17
-                            color: row.isSelected ? Appearance.onAccentContainer : Appearance.fg
-                            opacity: 0.5
-                        }
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
 
                         Text {
-                            Layout.fillWidth: true
-                            text: launcher.clipMode ? Cliphist.clean(row.modelData).replace(/\s+/g, " ") : row.modelData.name
-                            color: row.isSelected ? Appearance.onAccentContainer : Appearance.fg
-                            font.weight: row.isSelected ? Font.DemiBold : Font.Normal
-                            elide: Text.ElideRight
+                            text: launcher.clipMode ? "Search clipboard…" : "Search apps…"
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: Appearance.outline
+                            font.pixelSize: 17
+                            font.weight: Font.Medium
+                            font.family: Appearance.fontFamily
+                            visible: !searchField.text.length
+                        }
+
+                        TextInput {
+                            id: searchField
+                            anchors.fill: parent
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: Appearance.fg
+                            selectionColor: Appearance.accentContainer
+                            selectedTextColor: Appearance.onAccentContainer
+                            font.pixelSize: 17
+                            font.weight: Font.Medium
+                            font.family: Appearance.fontFamily
+                            clip: true
+                            selectByMouse: true
+
+                            onTextChanged: {
+                                launcher.query = text;
+                                launcher.selected = 0;
+                            }
+
+                            Keys.onEscapePressed: launcher.open = false
+                            Keys.onUpPressed: launcher.selected = Math.max(0, launcher.selected - 1)
+
+                            Keys.onDownPressed: launcher.selected = Math.min(launcher.results.length - 1, launcher.selected + 1)
+                            Keys.onReturnPressed: launcher.activate(launcher.results[launcher.selected])
+                            Keys.onEnterPressed: launcher.activate(launcher.results[launcher.selected])
+                        }
+                    }
+                    Rectangle {
+                        id:resultBox
+                        visible: launcher.hasCalc
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredHeight: 28
+                        Layout.preferredWidth: Math.min(200, resultText.implicitWidth + 24)
+                        radius: Appearance.pillRadius
+                        color: Appearance.accent
+
+                        Text {
+                            id: resultText
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: launcher.calcResult
+                            color: Appearance.onAccent
                             font.family: Appearance.fontFamily
                             font.pixelSize: 13
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                ListView {
+                    id: resultsList
+                    anchors.fill: parent
+                    clip: true
+                    model: launcher.results
+                    currentIndex: launcher.selected
+
+                    delegate: Item {
+                        id: row
+
+                        required property var modelData
+                        required property int index
+
+                        width: resultsList.width
+                        height: launcher.rowHeight
+
+                        readonly property bool isSelected: row.index === launcher.selected
+
+                        Rectangle {
+                            id: selectionChip
+                            anchors.fill: parent
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
+                            anchors.topMargin: 2
+                            anchors.bottomMargin: 2
+                            radius: 12
+                            color: row.isSelected ? Appearance.rowSelected : hover.hovered ? Appearance.rowHover : Appearance.rowIdle
 
                             Behavior on color {
                                 ColorAnimation {
                                     duration: Appearance.animFast
                                 }
                             }
+
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 4
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 3
+                                height: row.isSelected ? parent.height * 0.5 : 0
+                                radius: 2
+                                color: Appearance.accent
+
+                                Behavior on height {
+                                    NumberAnimation {
+                                        duration: Appearance.animFast
+                                        easing.type: Appearance.easeOutCubic
+                                    }
+                                }
+                            }
+                        }
+
+                        HoverHandler {
+                            id: hover
+                            onHoveredChanged: if (hovered)
+                                launcher.selected = row.index
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 20
+                            anchors.rightMargin: 18
+                            spacing: 12
+
+                            IconImage {
+                                visible: !launcher.clipMode
+                                Layout.preferredWidth: 26
+                                Layout.preferredHeight: 26
+                                source: launcher.clipMode ? "" : Quickshell.iconPath(row.modelData.icon, "image-missing")
+                            }
+
+                            MaterialSymbol {
+                                visible: launcher.clipMode
+                                icon: "content_copy"
+                                iconSize: 17
+                                color: row.isSelected ? Appearance.accent : Appearance.subtext
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Appearance.animFast
+                                    }
+                                }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: launcher.clipMode ? Cliphist.clean(row.modelData).replace(/\s+/g, " ") : row.modelData.name
+                                color: row.isSelected ? Appearance.accent : Appearance.fg
+                                font.weight: row.isSelected ? Font.DemiBold : Font.Normal
+                                elide: Text.ElideRight
+                                font.family: Appearance.fontFamily
+                                font.pixelSize: 14
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Appearance.animFast
+                                    }
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: launcher.activate(row.modelData)
                         }
                     }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: launcher.activate(row.modelData)
-                    }
+                }
 
                 Text {
                     anchors.centerIn: parent
                     visible: resultsList.count === 0
                     text: "No results"
-                    color: Appearance.fg
-                    opacity: 0.4
+                    color: Appearance.subtext
                     font.family: Appearance.fontFamily
                     font.pixelSize: 13
                 }
             }
         }
     }
-}
 }
