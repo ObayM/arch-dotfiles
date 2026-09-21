@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import qs.modules.services
+import qs.modules.calendar
 import qs.config
 
 Item {
@@ -14,8 +15,9 @@ Item {
     readonly property real pillCy: Appearance.barHeight / 2
     readonly property real islandBottom: pillTop + Appearance.islandHeight
 
-    readonly property real cardW: 400
-    readonly property real cardH: 300
+    readonly property real cardPadding: 12
+    readonly property real cardW: 320
+    readonly property real cardH: calendar.implicitHeight + cardPadding * 2
     readonly property real cardCy: islandBottom + cardH / 2
     readonly property real cardLeft: width / 2 - cardW / 2
 
@@ -97,12 +99,14 @@ Item {
             }
         }
 
-        Text {
-            anchors.centerIn: parent
-            text: "command center"
-            color: Appearance.fg
-            font.family: Appearance.fontFamily
-            font.pixelSize: 14
+        CalendarWidget {
+            id: calendar
+
+            x: root.cardPadding
+            y: root.cardPadding
+            width: root.cardW - root.cardPadding * 2
+
+            onMonthShiftChanged: if (monthShift !== 0) CommandCenterState.pinned = true
         }
     }
 }

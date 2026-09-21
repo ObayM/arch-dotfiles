@@ -1,192 +1,205 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
-
-import "calendar_layout.js" as CalendarLayout
+import Quickshell
+import qs.config
+import qs.modules.common
 
 Item {
-    id: calendar
+    id: root
 
     property int monthShift: 0
-    property var viewingDate: CalendarLayout.getDateInXMonthsTime(monthShift)
-    property var calendarLayout:
-        CalendarLayout.getCalendarLayout(
-            viewingDate,
-            monthShift === 0
-        )
+    property int firstDayOfWeek: Locale.Monday
 
-    implicitWidth: calendarColumn.implicitWidth
-    implicitHeight: calendarColumn.implicitHeight + 20
+    readonly property var locale: Qt.locale()
+    readonly property real cellSpacing: 3
+    readonly property real rowSpacing: 2
+    readonly property real headerHeight: 32
+    readonly property real weekDayHeight: 20
+    readonly property real cellSize: (width - cellSpacing * 6) / 7
 
-    focus: true
+    implicitWidth: 280
+    implicitHeight: headerHeight + weekDayHeight + cellSize * 6 + rowSpacing * 5 + Appearance.spacingS * 2
 
-    Keys.onPressed: (event) => {
-        if (event.key === Qt.Key_PageDown &&
-            event.modifiers === Qt.NoModifier) {
-
-            monthShift++
-            event.accepted = true
-
-        } else if (event.key === Qt.Key_PageUp &&
-                   event.modifiers === Qt.NoModifier) {
-
-            monthShift--
-            event.accepted = true
-        }
+    readonly property date viewing: {
+        const now = clock.date;
+        return new Date(now.getFullYear(), now.getMonth() + root.monthShift, 1);
     }
 
-    MouseArea {
-        anchors.fill: parent
+    readonly property int focusedMonth: viewing.getMonth() + 1
 
-        onWheel: (event) => {
-            if (event.angleDelta.y > 0)
-                monthShift--
-            else if (event.angleDelta.y < 0)
-                monthShift++
+    readonly property var weekDays: {
+        const names = [];
+        for (let i = 0; i < 7; i++)
+            names.push(root.locale.dayName((root.firstDayOfWeek + i) % 7, Locale.ShortFormat).slice(0, 2));
+        return names;
+    }
+
+    readonly property var weeks: {
+        const now = clock.date;
+        const first = root.viewing;
+        const offset = (first.getDay() - root.firstDayOfWeek + 7) % 7;
+        const rows = [];
+        for (let w = 0; w < 6; w++) {
+            const days = [];
+            for (let d = 0; d < 7; d++) {
+                const date = new Date(first.getFullYear(), first.getMonth(), 1 - offset + w * 7 + d);
+                days.push({
+                    day: date.getDate(),
+                    month: date.getMonth() + 1,
+                    today: date.getDate() === now.getDate() && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
+                });
+            }
+            rows.push(days);
+        }
+        return rows;
+    }
+
+    SystemClock {
+        id: clock
+        precision: SystemClock.Hours
+    }
+
+    WheelHandler {
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        onWheel: event => root.monthShift += event.angleDelta.y > 0 ? -1 : 1
+    }
+
+    component NavButton: Rectangle {
+        id: navButton
+
+        property string icon
+        signal triggered
+
+        implicitWidth: root.headerHeight
+        implicitHeight: root.headerHeight
+        radius: height / 2
+
+        color: tap.pressed ? Appearance.accentContainer : navHover.hovered ? Appearance.surfaceHigh : "transparent"
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Appearance.animFast
+            }
+        }
+
+        HoverHandler {
+            id: navHover
+        }
+
+        TapHandler {
+            id: tap
+            onTapped: navButton.triggered()
+        }
+
+        MaterialSymbol {
+            anchors.centerIn: parent
+            icon: navButton.icon
+            iconSize: 18
+            color: Appearance.fg
         }
     }
 
     ColumnLayout {
-        id: calendarColumn
+        anchors.fill: parent
+        spacing: Appearance.spacingS
 
-        anchors.centerIn: parent
-
-        spacing: 5
-
-        // Header
         RowLayout {
             Layout.fillWidth: true
-            spacing: 5
+            Layout.preferredHeight: root.headerHeight
+            spacing: 0
 
-            Rectangle {
+            Text {
                 Layout.fillWidth: true
-                implicitHeight: 38
+                Layout.leftMargin: 6
 
-                radius: 10
-                color: "transparent"
+                text: Qt.formatDateTime(root.viewing, "MMMM yyyy")
+                elide: Text.ElideRight
 
-                Text {
-                    anchors.fill: parent
+                font.family: Appearance.fontFamily
+                font.pixelSize: Appearance.fontSizeLarge
+                font.weight: Font.DemiBold
+                color: Appearance.fg
+            }
 
-                    leftPadding: 10
+            NavButton {
+                icon: "chevron_left"
+                onTriggered: root.monthShift--
+            }
 
-                    text: monthShift !== 0
-                          ? "• " + viewingDate.toLocaleDateString(
-                                Qt.locale(),
-                                "MMMM yyyy"
-                            )
-                          : viewingDate.toLocaleDateString(
-                                Qt.locale(),
-                                "MMMM yyyy"
-                            )
+            NavButton {
+                icon: "today"
+                opacity: root.monthShift === 0 ? 0 : 1
+                visible: opacity > 0
+                onTriggered: root.monthShift = 0
 
-                    verticalAlignment: Text.AlignVCenter
-
-                    font.pixelSize: 16
-                    font.weight: Font.DemiBold
-
-                    color: "#ffffff"
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-
-                    onClicked: {
-                        monthShift = 0
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Appearance.animFast
                     }
                 }
             }
 
-            Rectangle {
-                implicitWidth: 38
-                implicitHeight: 38
-
-                radius: width / 2
-                color: "transparent"
-
-                Text {
-                    anchors.fill: parent
-
-                    text: "‹"
-
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-
-                    font.pixelSize: 28
-                    color: "#ffffff"
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-
-                    onClicked: {
-                        monthShift--
-                    }
-                }
-            }
-
-            Rectangle {
-                implicitWidth: 38
-                implicitHeight: 38
-
-                radius: width / 2
-                color: "transparent"
-
-                Text {
-                    anchors.fill: parent
-
-                    text: "›"
-
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-
-                    font.pixelSize: 28
-                    color: "#ffffff"
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-
-                    onClicked: {
-                        monthShift++
-                    }
-                }
+            NavButton {
+                icon: "chevron_right"
+                onTriggered: root.monthShift++
             }
         }
 
-        // Weekday names
         RowLayout {
-            id: weekDaysRow
-
-            Layout.alignment: Qt.AlignHCenter
-
-            spacing: 5
+            Layout.fillWidth: true
+            Layout.preferredHeight: root.weekDayHeight
+            spacing: root.cellSpacing
 
             Repeater {
-                model: CalendarLayout.weekDays
+                model: root.weekDays
 
-                delegate: CalendarDayButton {
-                    day: modelData.day
-                    isToday: modelData.today
-                    bold: true
+                delegate: Text {
+                    required property string modelData
+
+                    Layout.preferredWidth: root.cellSize
+                    Layout.fillHeight: true
+
+                    text: modelData
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+
+                    font.family: Appearance.fontFamily
+                    font.pixelSize: Appearance.fontSizeSmall
+                    font.weight: Font.DemiBold
+                    color: Appearance.accent
                 }
             }
         }
 
-        // Calendar
-        Repeater {
-            model: 6
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: root.rowSpacing
 
-            delegate: RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillHeight: false
-                spacing: 5
+            Repeater {
+                model: root.weeks
 
-                Repeater {
-                    model: Array(7).fill(modelData)
+                delegate: RowLayout {
+                    id: weekRow
 
-                    delegate: CalendarDayButton {
-                        day: calendarLayout[modelData][index].day
-                        isToday: calendarLayout[modelData][index].today
+                    required property var modelData
+
+                    Layout.fillWidth: true
+                    spacing: root.cellSpacing
+
+                    Repeater {
+                        model: weekRow.modelData
+
+                        delegate: CalendarDayButton {
+                            required property var modelData
+
+                            Layout.preferredWidth: root.cellSize
+                            Layout.preferredHeight: root.cellSize
+
+                            model: modelData
+                            focusedMonth: root.focusedMonth
+                        }
                     }
                 }
             }

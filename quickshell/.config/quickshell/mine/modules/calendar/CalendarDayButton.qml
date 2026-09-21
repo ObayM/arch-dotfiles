@@ -1,60 +1,38 @@
-import QtQuick
-import QtQuick.Layouts
+  import QtQuick
+  import qs.config
 
-Rectangle {
-    id: button
+  Rectangle {
+      id: root
 
-    property string day: ""
-    property int isToday: 0
-    property bool bold: false
+      required property var model
+      required property int focusedMonth
 
-    implicitWidth: 38
-    implicitHeight: 38
+      readonly property bool today: model.today
+      readonly property bool outside: model.month !== focusedMonth
 
-    radius: 10
+      radius: height / 2
 
-    color: isToday === 1
-           ? "#3f51b5"
-           : "transparent"
+      color: today ? Appearance.accent : hover.hovered ? Appearance.surfaceHigh : "transparent"
 
-    border.width: isToday === 1 ? 0 : 0
+      Behavior on color {
+          ColorAnimation {
+              duration: Appearance.animFast
+          }
+      }
 
-    Text {
-        anchors.fill: parent
+      HoverHandler {
+          id: hover
+      }
 
-        text: button.day
+      Text {
+          anchors.centerIn: parent
 
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
+          text: root.model.day
 
-        font.weight: button.bold ? Font.DemiBold : Font.Normal
-        font.pixelSize: 14
+          font.family: Appearance.fontFamily
+          font.pixelSize: Appearance.fontSizeNormal
+          font.weight: root.today ? Font.DemiBold : Font.Normal
 
-        color: button.isToday === 1
-               ? "white"
-               : button.isToday === 0
-                 ? "#ffffff"
-                 : "#777777"
-    }
-
-    Behavior on color {
-        ColorAnimation {
-            duration: 120
-        }
-    }
-
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-
-        onEntered: {
-            if (button.isToday !== 1)
-                button.color = "#252525"
-        }
-
-        onExited: {
-            if (button.isToday !== 1)
-                button.color = "transparent"
-        }
-    }
-}
+          color: root.today ? Appearance.bg : root.outside ? Qt.rgba(Appearance.fg.r, Appearance.fg.g, Appearance.fg.b, 0.32) : Appearance.fg
+      }
+  }
