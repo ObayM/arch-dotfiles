@@ -68,7 +68,6 @@ ShellRoot {
 
     Notifications {}
     Osd {}
-    CommandCenter {}
 
     CalendarWidget {}
     Wallpaper {}

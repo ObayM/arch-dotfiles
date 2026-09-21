@@ -1,83 +1,95 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Quickshell
-import Quickshell.Wayland
+import QtQuick.Effects
 import qs.modules.services
 import qs.config
 
-import QtQuick.Shapes
-
-PanelWindow {
+Item {
     id: root
 
-    screen: CommandCenterState.screen ?? Quickshell.screens[0]
-    color: 'transparent'
-    visible: mapped
+    required property bool active
 
-    WlrLayershell.namespace: "quickshell:commandcenter"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    exclusionMode: ExclusionMode.Ignore
+    readonly property real pillTop: (Appearance.barHeight - Appearance.islandHeight) / 2
+    readonly property real pillCy: Appearance.barHeight / 2
+    readonly property real islandBottom: pillTop + Appearance.islandHeight
 
-    property bool mapped: false
-    property bool shown: false
+    readonly property real cardW: 400
+    readonly property real cardH: 300
+    readonly property real cardCy: islandBottom + cardH / 2
+    readonly property real cardLeft: width / 2 - cardW / 2
 
-    Connections {
-        target: CommandCenterState
-        function onVisibleChanged() {
-            if (CommandCenterState.visible) {
-                hideTimer.stop();
-                root.mapped = true;
-                showTimer.restart();
-            } else {
-                root.shown = false;
-                hideTimer.restart();
-            }
+    readonly property real pillW: Math.max(Appearance.pillRadius * 2, CommandCenterState.pillWidth)
+
+    property real progress: active ? 1 : 0
+
+    readonly property bool rendering: progress > 0
+
+    readonly property real boxHw: pillW / 2 + (cardW - pillW) / 2 * progress
+    readonly property real boxHh: Appearance.islandHeight / 2 + (cardH - Appearance.islandHeight) / 2 * progress
+    readonly property real boxCy: pillCy + (cardCy - pillCy) * progress
+    readonly property real boxR: Appearance.pillRadius + (Appearance.cardRadius - Appearance.pillRadius) * progress
+
+    readonly property real blobK: {
+        const t = Math.max(0, Math.min(1, (progress - 0.2) / 0.8));
+        return Appearance.blobSmoothing * t * t * (3 - 2 * t);
+    }
+
+    readonly property vector4d fillVec: Qt.vector4d(Appearance.islandColor.r, Appearance.islandColor.g, Appearance.islandColor.b, Appearance.islandColor.a)
+    readonly property vector4d lineVec: Qt.vector4d(Appearance.hairline.r, Appearance.hairline.g, Appearance.hairline.b, Appearance.hairline.a)
+
+    Behavior on progress {
+        NumberAnimation {
+            duration: Appearance.animMed
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.curveEmphasized
         }
     }
 
-    Timer {
-        id: showTimer
-        interval: 16
-        onTriggered: root.shown = true
+    RectangularShadow {
+        x: root.width / 2 - root.boxHw
+        y: root.boxCy - root.boxHh
+        width: root.boxHw * 2
+        height: root.boxHh * 2
+        radius: root.boxR
+        blur: Appearance.panelShadowBlur
+        spread: Appearance.panelShadowSpread
+        offset: Qt.vector2d(0, Appearance.panelShadowY)
+        color: Appearance.shadowColor
+        opacity: root.progress
+        visible: root.rendering
+        cached: false
     }
 
-    Timer {
-        id: hideTimer
-        interval: Appearance.animMed
-        onTriggered: root.mapped = false
-    }
+    ShaderEffect {
+        anchors.fill: parent
+        visible: root.rendering
+        blending: true
+        fragmentShader: Qt.resolvedUrl("../shaders/blob.frag.qsb")
 
-    anchors {
-        top: true
-    }
-
-    margins {
-        top: 0
-    }
-
-    readonly property real islandBottom: Appearance.margin + (Appearance.barHeight + Appearance.islandHeight) / 2
-
-    implicitHeight: islandBottom + 300
-    implicitWidth: 360
-
-    mask: Region {
-        item: card
-    }
-
-    HoverHandler {
-        onHoveredChanged: CommandCenterState.panelHovered = hovered
+        property vector2d res: Qt.vector2d(width, height)
+        property vector4d pill: Qt.vector4d(root.width / 2, root.pillCy, root.pillW / 2, Appearance.islandHeight / 2)
+        property vector4d card: Qt.vector4d(root.width / 2, root.boxCy, root.boxHw, root.boxHh)
+        property vector4d fillColour: root.fillVec
+        property vector4d lineColour: root.lineVec
+        property real pillR: Appearance.pillRadius
+        property real cardR: root.boxR
+        property real k: root.blobK
     }
 
     Item {
-        id: content
+        x: root.cardLeft
+        y: root.islandBottom
+        width: root.cardW
+        height: root.cardH
 
-        anchors.fill: parent
-        transformOrigin: Item.Top
+        visible: root.rendering
+        opacity: root.active ? 1 : 0
 
-        opacity: root.shown ? 1 : 0
-        scale: root.shown ? 1 : 0.97
+        HoverHandler {
+            enabled: root.rendering
+            onHoveredChanged: CommandCenterState.panelHovered = hovered
+        }
 
         Behavior on opacity {
             NumberAnimation {
@@ -85,84 +97,12 @@ PanelWindow {
             }
         }
 
-        Behavior on scale {
-            NumberAnimation {
-                duration: Appearance.animMed
-                easing.type: Appearance.easeOutCubic
-            }
-        }
-
-        Rectangle {
-            id: card
-            y: root.islandBottom
-
-            width: parent.width
-            height: 300
-
-            radius: Appearance.radius * 1.67
-
-            color: Appearance.islandColor
-            border.width: 1
-            border.color: Appearance.hairline
-
-            Text {
-                anchors.centerIn: parent
-                text: "command center"
-                color: Appearance.fg
-                font.family: Appearance.fontFamily
-                font.pixelSize: 14
-            }
-        }
-
-        InvertedCorner {
-            size: 14
-            fill: card.color
-            y: root.islandBottom - size
-            x: card.width / 2 - CommandCenterState.pillWidth / 2 - size
-        }
-
-        InvertedCorner {
-            size: 14
-            mirror: true
-            fill: card.color
-            y: root.islandBottom - size
-            x: card.width / 2 + CommandCenterState.pillWidth / 2
+        Text {
+            anchors.centerIn: parent
+            text: "command center"
+            color: Appearance.fg
+            font.family: Appearance.fontFamily
+            font.pixelSize: 14
         }
     }
-
-    component InvertedCorner: Shape {
-        id: corner
-
-        property real size: 14
-        property color fill: "white"
-        property bool mirror: false
-
-        width: size
-        height: size
-        preferredRendererType: Shape.CurveRenderer
-
-        transform: Scale {
-            xScale: corner.mirror ? -1 : 1
-            origin.x: corner.size / 2
-        }
-        
-        ShapePath {
-            fillColor: corner.fill
-            strokeWidth: 0
-
-            startX: corner.size
-            startY: 0
-
-            PathLine { x: corner.size; y: corner.size }
-            PathLine { x: 0; y: corner.size }
-            PathArc {
-                x: corner.size
-                y: 0
-                radiusX: corner.size
-                radiusY: corner.size
-                direction: PathArc.Counterclockwise
-            }
-        }
-    }
-
 }

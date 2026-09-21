@@ -30,6 +30,10 @@ Variants {
         property real hPadding: 14
         property real bottomRadius: Appearance.pillRadius
 
+        property bool elevated: true
+        property bool bare: false
+        property bool hoverTint: true
+
         readonly property alias hovered: hoverHandler.hovered
 
         implicitWidth: (island.inner ? island.inner.implicitWidth : 0) + hPadding * 2
@@ -37,19 +41,56 @@ Variants {
         width: implicitWidth
         height: implicitHeight
 
+        Behavior on implicitWidth {
+            NumberAnimation {
+                duration: Appearance.animMed
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Appearance.curveExpressive
+            }
+        }
+
         HoverHandler {
             id: hoverHandler
         }
 
+        RectangularShadow {
+            anchors.fill: parent
+            radius: Appearance.pillRadius
+            blur: Appearance.pillShadowBlur
+            spread: Appearance.pillShadowSpread
+            offset: Qt.vector2d(0, Appearance.pillShadowY)
+
+            color: Appearance.shadowColor
+            opacity: island.elevated && !island.bare ? 1 : 0
+            cached: false
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Appearance.animMed
+                }
+            }
+        }
+
         Rectangle {
             anchors.fill: parent
+            antialiasing: true
+            visible: !island.bare
+
             topLeftRadius: Appearance.pillRadius
             topRightRadius: Appearance.pillRadius
             bottomLeftRadius: island.bottomRadius
             bottomRightRadius: island.bottomRadius
-            color: Appearance.islandColor
+
+            color: island.hoverTint && (island.hovered || island.active) ? Appearance.islandHover : Appearance.islandColor
+
             border.width: 1
             border.color: Appearance.hairline
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Appearance.animFast
+                }
+            }
 
             Behavior on bottomLeftRadius {
                 NumberAnimation {
@@ -62,42 +103,23 @@ Variants {
                     duration: Appearance.animFast
                 }
             }
-
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: Appearance.shadowColor
-                shadowBlur: Appearance.shadowBlur / 64
-                shadowVerticalOffset: Appearance.shadowOffsetY
-                shadowHorizontalOffset: 0
-                blurEnabled: false
-            }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            topLeftRadius: Appearance.pillRadius
-            topRightRadius: Appearance.pillRadius
-            bottomLeftRadius: island.bottomRadius
-            bottomRightRadius: island.bottomRadius
-            color: Appearance.fg
-            opacity: island.hovered || island.active ? 0.04 : 0
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Appearance.animFast
-                }
-            }
         }
     }
 
-    component Divider: Rectangle {
+    component Divider: Item {
         Layout.preferredWidth: 1
         Layout.fillHeight: true
-        Layout.topMargin: 7
-        Layout.bottomMargin: 7
-        radius: 0.5
-        color: Appearance.hairline
+        Layout.topMargin: 6
+        Layout.bottomMargin: 6
+
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 0.5; color: Appearance.hairline }
+                GradientStop { position: 1.0; color: "transparent" }
+            }
+        }
     }
 
     PanelWindow {
@@ -216,10 +238,31 @@ Variants {
             right: Appearance.margin
         }
 
-        implicitHeight: Appearance.barHeight
+        implicitHeight: commandCenter.islandBottom + commandCenter.cardH + Appearance.panelShadowBlur + Appearance.panelShadowSpread + Appearance.panelShadowY + 12
 
         exclusiveZone: Appearance.barHeight + Appearance.margin
         color: "transparent"
+
+        mask: Region {
+            x: 0
+            y: 0
+            width: bar.width
+            height: Appearance.barHeight
+
+            Region {
+                x: commandCenter.cardLeft
+                y: commandCenter.islandBottom
+                width: commandCenter.cardW
+                height: commandCenter.cardH * commandCenter.progress
+            }
+        }
+
+        CommandCenter {
+            id: commandCenter
+
+            anchors.fill: parent
+            active: bar.ccVisible
+        }
 
         SystemClock {
             id: clock
@@ -227,7 +270,10 @@ Variants {
         }
 
         Item {
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: Appearance.barHeight
             anchors.leftMargin: 16
             anchors.rightMargin: 16
 
@@ -259,11 +305,17 @@ Variants {
                         property real idxTrail: activeIndex
 
                         Behavior on idxLead {
-                            NumberAnimation { duration: 100; easing.type: Easing.OutSine }
+                            NumberAnimation { 
+                                duration: 180; easing.type: Easing.BezierSpline 
+                                easing.bezierCurve: Appearance.curveExpressive
+                            }
                         }
 
                         Behavior on idxTrail {
-                            NumberAnimation { duration: 300; easing.type: Easing.OutSine }
+                            NumberAnimation { 
+                                duration: 340; easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Appearance.curveSpatial
+                            }
                         }
 
                         property var occupied: []
@@ -308,6 +360,7 @@ Variants {
                             height: wsContainer.activeSize
                             radius: height / 2
                             color: Appearance.accent
+                            antialiasing: true
                         }
 
                         Row {
@@ -400,7 +453,10 @@ Variants {
                 anchors.verticalCenter: parent.verticalCenter
                 inner: clockRow
 
-                bottomRadius:  bar.ccVisible ? 0 : Appearance.pillRadius
+                bottomRadius: bar.ccVisible ? 0 : Appearance.pillRadius
+                elevated: !bar.ccVisible
+                bare: commandCenter.rendering
+                hoverTint: false
 
                 onWidthChanged: CommandCenterState.pillWidth = width
 
