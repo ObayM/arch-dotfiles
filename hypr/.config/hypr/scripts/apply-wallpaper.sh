@@ -9,6 +9,19 @@ PREFER="saturation"
 NOSWITCH=0
 IMG=""
 
+usage() {
+    cat <<'USAGE'
+usage: apply-wallpaper.sh [options] <image>
+  -m, --mode <dark|light>   colour scheme mode (default: dark)
+  -t, --type <scheme>       matugen scheme (default: scheme-tonal-spot)
+  -p, --prefer <mode>       matugen preference (default: saturation)
+  -n, --noswitch            re-apply the current wallpaper
+  -r, --random <dir>        pick a random image from <dir>
+  -h, --help                show this
+USAGE
+}
+
+
 notify() {
     command -v notify-send >/dev/null && \
         notify-send -a "Wallpaper" -u "$1" "$2" "$3" || true

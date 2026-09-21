@@ -17,6 +17,7 @@ PanelWindow {
     screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null    
     WlrLayershell.namespace: "quickshell:notifications"
     color: "transparent"
+    visible: NotificationsService.list.values.length > 0
 
     anchors {
         top: true

@@ -70,6 +70,7 @@ hl.bind(mod .. " + M", hl.dsp.exit())
 hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs -c mine ipc call wallpaper toggle"))
 hl.bind(mod .. " + SHIFT + W", hl.dsp.exec_cmd("qs -c mine ipc call wallpaper random"))
 
+hl.layer_rule({ name = "blur-bar", match = { namespace = "quickshell:bar" }, blur = true, ignore_alpha = true, no_anim = true })
 
 for key, direction in pairs({ left = "l", right = "r", up = "u", down = "d" }) do
     hl.bind(mod .. " + " .. key, hl.dsp.focus({ direction = direction }))
