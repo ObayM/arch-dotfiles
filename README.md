@@ -2,7 +2,11 @@
 
 > Dotfiles for arch + hyperland
 
+## Demo
 
+<video src="https://raw.githubusercontent.com/ObayM/arch-dotfiles/main/demo.mp4" controls muted loop width="100%"></video>
+
+[`demo.mp4`](demo.mp4)
 
 ## Requirements
 
